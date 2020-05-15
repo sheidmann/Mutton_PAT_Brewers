@@ -7,7 +7,4 @@ Mutton_PAT_Brewers.Rproj
 
 .DS_Store
 
-mnb_analyses/
-mnb_data/
-mnb_glatos/
-mnb_writing/
+data/

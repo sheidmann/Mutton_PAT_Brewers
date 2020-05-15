@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+Mutton_PAT_Brewers.Rproj
+
+mnb_analyses/
+mnb_data/
+mnb_glatos/
+mnb_writing/

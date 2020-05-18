@@ -13,8 +13,8 @@ Keywords: acoustic telemetry, home range, US Virgin Islands, movement ecology, L
 
 **Analysis Scripts**\
 Note: these scripts rely heavily on the tidyverse and lubridate packages. There is a line in each one to load the appropriate libraries.
-- *2_processing.R* - formats the raw data
-- *3_cutting.R* - trims datasets of behavioral abnormalities
-- *3b_transum.R* - creates a detection summary table
-- *4_binning.R* - bins detections into 30-min periods
+- *1_processing.R* - formats the raw data
+- *2_cutting.R* - trims datasets of behavioral abnormalities
+- *3_binning.R* - bins detections into 30-min periods
+- *transum.R* - creates a detection summary table
 

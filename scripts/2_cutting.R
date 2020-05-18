@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 15 Oct 2018
-# Last modified 6 May 2020
+# Last modified 18 May 2020
 
 # Summary:
 # Data inputs:
@@ -22,7 +22,7 @@ library(lubridate)
 
 ##### Import the data #####
 # Read the files
-sourcePath <- "mnb_data/2_processed_SLH/" # source is modifiable
+sourcePath <- "data/2_processed_SLH/" # source is modifiable
 filenames <- list.files(sourcePath) # extract the filenames
 importMNB <- function(filename){
       # Read the file
@@ -46,7 +46,7 @@ names(mnb2ls) <- gsub(".csv", "", filenames) # take .csv out of the names
 transList <- names(mnb2ls) 
 
 # Import the transmitter master file
-transMaster <- read_csv("mnb_data/mnb_otherdata/uvi_transmitter_master_2017.csv",
+transMaster <- read_csv("data/otherdata/uvi_transmitter_master_2017.csv",
                         col_types = 
                            cols(TL = col_double(),
                                 release_date = col_date(format="%m/%d/%y"))) %>%
@@ -54,20 +54,17 @@ transMaster <- read_csv("mnb_data/mnb_otherdata/uvi_transmitter_master_2017.csv"
 # ignore 14 parsing failures
 
 # Import the station master file
-statmaster <- read_csv("mnb_data/mnb_otherdata/uvi_station_master_2017.csv",
-                       col_types = cols(station=col_character())) %>%
-   filter(array == "mare_nostrum") %>% # subset to Brewers only
-   filter(station != "283") %>% # remove inactive station
-   filter(station != "246") # remove inactive station
+statmaster <- read_csv("data/otherdata/mnb_station_master_2017.csv",
+                       col_types = cols(station=col_character()))
 
 # Read the previously-determined dead dates
-deadDates <- read_csv("mnb_data/mnb_otherdata/deaddates_20180117.csv")
+deadDates <- read_csv("data/otherdata/deaddates_20180117.csv")
 
 # Enter the final array pull date (last date to keep)
 finalArrayPullDate <- as.Date("2017-11-08")
 
 # Enter the location for exported files
-sinkPath <- "mnb_data/3_cut/"
+sinkPath <- "data/3_cut/"
 
 ##### Trim the data #####
 # deadDate and arrayPullDate should be the last day you would like to keep

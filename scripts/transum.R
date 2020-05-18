@@ -20,7 +20,7 @@ library(lubridate)
 
 ##### Enter parameters #####
 # Enter the name of the transmitter master sheet (csv) with filepath
-transmasterPath <- "data/otherdata/uvi_transmitter_master_2017.csv"
+transmasterPath <- "data/otherdata/mnb_mutton_transmitter_master_2017.csv"
 
 # Enter the name of the station master sheet (csv) with filepath
 statmasterPath <- "data/otherdata/mnb_station_master_2017.csv"
@@ -36,13 +36,9 @@ sinkPath <- "outputs/"
 filenames <- list.files(path = sourcePath)
 
 # Read the transmitter master sheet
-transmaster <- read_csv(transmasterPath, 
-                        col_types = cols(TL = col_double(),
-                                         release_date = col_date(format="%m/%d/%y"))) %>%
+transmaster <- read_csv(transmasterPath) %>%
    # Keep only needed columns
-   select(transmitter, release_date, TL) %>%
-   # Keep only needed transmitters
-   filter(transmitter %in% gsub(".csv","",filenames))
+   select(transmitter, release_date, TL)
 
 # Read the station master sheet
 statmaster <- read_csv(statmasterPath)

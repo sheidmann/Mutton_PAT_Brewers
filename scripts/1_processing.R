@@ -47,6 +47,7 @@ sinkPath <- "data/2_processed_SLH/"
 ##### Delete spawning detections #####
 # Load list of active Brewers receivers
 statmaster <- read_csv("data/otherdata/mnb_station_master_2017.csv")
+
 # Keep only detections on that list
 delStat <- function(dataset){
       dat <- filter(dataset, station %in% statmaster$station)

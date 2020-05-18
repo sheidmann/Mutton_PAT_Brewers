@@ -46,15 +46,10 @@ names(mnbls) <- gsub(".csv", "", filenames) # take .csv out of the names
 transList <- names(mnbls) 
 
 # Import the transmitter master file
-transMaster <- read_csv("data/otherdata/uvi_transmitter_master_2017.csv",
-                        col_types = 
-                           cols(TL = col_double(),
-                                release_date = col_date(format="%m/%d/%y"))) %>%
-   filter(transmitter %in% transList)
-# ignore 14 parsing failures
+transMaster <- read_csv("data/otherdata/mnb_mutton_transmitter_master_2017.csv")
 
 # Import the station master file
-statmaster <- read_csv("data/otherdata/mnb_station_master_2017.csv",
+statMaster <- read_csv("data/otherdata/mnb_station_master_2017.csv",
                        col_types = cols(station=col_character()))
 
 # Read the previously-determined dead dates

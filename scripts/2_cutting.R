@@ -34,16 +34,16 @@ importMNB <- function(filename){
       # Return the dataset
       return(dat)
 }
-mnb2ls <- lapply(filenames, importMNB) # read all the files into a list
-names(mnb2ls) <- gsub(".csv", "", filenames) # take .csv out of the names
-# names(mnb2ls) # check it
+mnbls <- lapply(filenames, importMNB) # read all the files into a list
+names(mnbls) <- gsub(".csv", "", filenames) # take .csv out of the names
+# names(mnbls) # check it
 
 # Check one file
-# mnb2ls[[1]]
-# tz(mnb2ls[[1]]$detection_time_ast)
+# mnbls[[1]]
+# tz(mnbls[[1]]$detection_time_ast)
 
 # Make a list of the transmitters
-transList <- names(mnb2ls) 
+transList <- names(mnbls) 
 
 # Import the transmitter master file
 transMaster <- read_csv("data/otherdata/uvi_transmitter_master_2017.csv",
@@ -103,10 +103,10 @@ trimPAT <- function(dataset, deadDates, arrayPullDate){
    return(dataset)
 }
 # Apply to the list of datasets
-mnb2ls_cut <- lapply(mnb2ls, trimPAT, deadDates, finalArrayPullDate)
+mnbls_cut <- lapply(mnbls, trimPAT, deadDates, finalArrayPullDate)
 
 ##### Export the data #####
-for(dataset in mnb2ls_cut){
+for(dataset in mnbls_cut){
    trans <- dataset$transmitter[1] # dynamically name the file
    write_excel_csv(dataset, paste0(sinkPath, trans, ".csv"))
 }

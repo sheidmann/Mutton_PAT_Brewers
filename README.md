@@ -2,7 +2,7 @@ This study is not yet published.
 
 **Study:** Home range characteristics and diel changes in space use of mutton snapper, *Lutjanus analis*, in St. Thomas, US Virgin Islands
 
-**Authors:** Sarah L. Heidmann*, Jonathan Jossart, Richard S. Nemeth\
+**Authors:** Sarah L. Heidmann, Jonathan Jossart, Richard S. Nemeth\
 Corresponding author: SL Heidmann, sarah.heidmann\@uvi.edu
 
 **Abstract**\

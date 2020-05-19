@@ -25,8 +25,11 @@ library(lubridate)
 
 ##### Set up the temp data #####
 # Start with temperature
-hobo <- read_csv("data/otherdata/mnb_temp_all_201410_201711.csv")
-hobo$temp_c <- round(hobo$temp_c,1)
+hobo <- read_csv("data/otherdata/mnb_temp_all_201410_201711.csv") %>%
+   # Change time zone
+   mutate(sampletime_15min = force_tz(sampletime_15min, "America/Virgin")) %>%
+   # Round the temperature value for consistency
+   mutate(temp_c = round(temp_c,1))
 hobo
 
 # Match stations to receivers

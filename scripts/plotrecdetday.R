@@ -93,6 +93,12 @@ recDetDay_all %>%
    filter(type == "Stations per day") %>%
    select(value) %>% range()
 
+# By transmitter, what was the average stations visited per day?
+recDetDay_all %>%
+   filter(type == "Stations per day") %>%
+   group_by(transmitter) %>%
+   summarise(meanstats=mean(value, na.rm=TRUE))
+
 # Summarize and add temperature
 recDetDay_all <- hobo %>% # start with raw
    add_column(type="Temperature (°C)") %>% # set type
@@ -129,7 +135,7 @@ ggplot(data = recDetDay_all) +
                       guide = guide_legend(nrow=1)) +
    # formatting
    theme(axis.text.x = element_text(angle = -90), 
-         text = element_text(size=16),
+         text = element_text(size=16, family = "Times New Roman"),
          panel.background = element_blank(), 
          axis.line = element_line(),
          legend.key = element_blank(), 

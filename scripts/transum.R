@@ -31,7 +31,7 @@ sourcePath <- "data/3_cut/"
 # Enter the filepath for the final table
 sinkPath <- "outputs/"
 
-##### Run it #####
+##### Make the table #####
 # Get the list of files
 filenames <- list.files(path = sourcePath)
 
@@ -81,7 +81,21 @@ for (i in 1:length(filenames)){
 }
 transum
 
-# Export the table
+##### Summary statistics #####
+# Total length
+range(transum$TL.cm)
+mean(transum$TL.cm)
+sd(transum$TL.cm) / sqrt(nrow(transum))
+
+# Tracking duration
+transum %>%
+   filter(!grepl("36029|45336",Transmitter)) %>% # take out insufficient data
+   summarise(min = min(Days.between.first.and.last),
+             max = max(Days.between.first.and.last),
+             mean = mean(Days.between.first.and.last),
+             sem = sd(Days.between.first.and.last) / sqrt(length(Days.between.first.and.last)))
+
+##### Export the table #####
 transum %>%
    arrange(TagDate, Transmitter) %>% # sorted by date tagged, then transmitter
    write_excel_csv(., paste0(sinkPath, "transum_mnb_muttonsnapper.csv"))

@@ -79,6 +79,7 @@ for (i in 1:length(filenames)){
                         No.stations.visited = length(unique(temp$station)))
       transum <- bind_rows(transum, tempsum)
 }
+transum
 
 # Export the table
 transum %>%

@@ -99,6 +99,13 @@ recDetDay_all %>%
    group_by(transmitter) %>%
    summarise(meanstats=mean(value, na.rm=TRUE))
 
+# What was the residency index?
+recDetDay_all %>%
+   filter(type == "Detections per day") %>%
+   group_by(transmitter) %>%
+   # number of days with detections / number of days
+   summarise(RI = sum(value!=0) / length(value))
+
 # Summarize and add temperature
 recDetDay_all <- hobo %>% # start with raw
    add_column(type="Temperature (°C)") %>% # set type

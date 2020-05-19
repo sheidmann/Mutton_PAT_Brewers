@@ -18,8 +18,7 @@ library(lubridate)
 
 ##### Import data #####
 sourcePath <- "data/3_cut/" # determine data location
-filenames <- list.files(sourcePath) %>% # extract filenames
-   subset(.,!(substr(., 10,14) %in% c("36029","45336"))) # exclude those with insufficient data
+filenames <- list.files(sourcePath) # extract filenames
 importMNB <- function(filename){
    # Read the file
    dat <- read_csv(paste0(sourcePath, filename),
@@ -85,8 +84,20 @@ mnbls_bin <- lapply(mnbls, posavg)
 lapply(mnbls, nrow)
 lapply(mnbls_bin, nrow)
 
+##### Calculate hourly residence index #####
+calcHRI <- function(dataset) {
+   hri <- (nrow(dataset) - sum(is.na(dataset$avg_lat))) / nrow(dataset)
+   hri <- round(hri,2) # round the result
+   return(hri)
+}
+lapply(mnbls_bin, calcHRI)
+
+
 ##### Export #####
+# Only export those with sufficient data
 for(dataset in mnbls_bin){
    trans <- dataset$transmitter[1] # dynamically name the file
-   write_excel_csv(dataset, paste0(sinkPath, trans, ".csv"))
+   if(!(substr(trans, 10,14) %in% c("36029","45336"))){ # exclude those with insufficient data
+      write_excel_csv(dataset, paste0(sinkPath, trans, ".csv"))
+   }
 }

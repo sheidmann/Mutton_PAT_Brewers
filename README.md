@@ -17,5 +17,6 @@ Note: these scripts rely heavily on the tidyverse and lubridate packages. There 
 - *2_cutting.R* - trims datasets of behavioral abnormalities
 - *3_binning.R* - bins detections into 30-min periods
 - *transum.R* - creates a detection summary table
+- *plotrecdetday.R* - creates a plot of transmitter activity and temperature over time
 - *temperature_analysis.R* - a frequency analysis of temperature associations
 

@@ -49,10 +49,10 @@ posavg <- function(dataset){
                 No.detections = length(station), # total number of detections
                 daynight = names(which.max(table(daynight))), # period set to most common value
                 # average all position columns
-                avg_lat = round(mean(lat_nad83)), 
-                avg_long = round(mean(long_nad83)),
-                avg_x = round(mean(x_UTM20N)),
-                avg_y = round(mean(y_UTM20N))) %>%
+                avg_lat = round(mean(lat_nad83),5), 
+                avg_long = round(mean(long_nad83),5),
+                avg_x = round(mean(x_UTM20N),2),
+                avg_y = round(mean(y_UTM20N),2)) %>%
       ungroup()
    # Add the zeros for hours when not present
    # For each date in the range of the dataset

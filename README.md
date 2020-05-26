@@ -18,5 +18,6 @@ Note: these scripts rely heavily on the tidyverse and lubridate packages. There 
 - *3_binning.R* - bins detections into 30-min periods
 - *transum.R* - creates a detection summary table
 - *plotrecdetday.R* - creates a plot of transmitter activity and temperature over time
+- *mcp_creation.R* - creates minimum convex polygons for each fish
 - *temperature_analysis.R* - a frequency analysis of temperature associations
 

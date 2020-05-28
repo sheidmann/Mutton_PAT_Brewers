@@ -29,7 +29,7 @@ importMNB <- function(filename){
    dat <- read_csv(paste0(sourcePath, filename),
                    col_types = cols(station = col_character())) %>%
       # Keep only needed columns
-      select(station,transmitter, detection_time_ast, lat_nad83,long_nad83) %>%
+      dplyr::select(station, transmitter, detection_time_ast, lat_nad83,long_nad83) %>%
       # Change time zone
       mutate(detection_time_ast = force_tz(detection_time_ast, 
                                            "America/Virgin")) %>%
@@ -39,10 +39,23 @@ importMNB <- function(filename){
    return(dat)
 }
 mnbls <- lapply(filenames, importMNB)
-names(mnbls) <- substr(filenames, 1, 14)
+names(mnbls) <- gsub(".csv", "", filenames)
 mnbls
 
 sinkPath <- "data/2_processed_SLH/"
+
+##### Fix the positive longitudes #####
+negLong <- function(dataset){
+   dataset %>% dplyr::select(long_nad83) %>% 
+      summary() # 4 of them have detections with a positive longitude
+   dataset <- dataset %>%
+      mutate(long_nad83 = ifelse(long_nad83>0, # if longitude is positive
+                                 long_nad83 * -1, # turn it negative
+                                 long_nad83)) # otherwise leave it
+   #dataset %>% dplyr::select(long_nad83) %>% summary() # check them
+   return(dataset)
+}
+mnbls <- lapply(mnbls, negLong)
 
 ##### Delete spawning detections #####
 # Load list of active Brewers receivers
@@ -96,7 +109,7 @@ mnbls_proc <- lapply(mnbls_proc, addDayNight)
 
 # add UTM20 positions (x_UTM20 and y_UTM20) so don’t have to project every time
 projUTM20 <- function(dataset){
-      dataset_s <- SpatialPoints(coords = select(dataset, long_nad83, lat_nad83),
+      dataset_s <- SpatialPoints(coords = dplyr::select(dataset, long_nad83, lat_nad83),
                                  proj4string = CRS("+proj=longlat +datum=NAD83"))
       #project (UTM Zone 20N)
       dataset_sp <- spTransform(dataset_s, CRS("+proj=utm +zone=20 +datum=NAD83 +units=m"))

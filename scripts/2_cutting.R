@@ -27,7 +27,8 @@ filenames <- list.files(sourcePath) # extract the filenames
 importMNB <- function(filename){
       # Read the file
       dat <- read_csv(paste0(sourcePath, filename),
-                       col_types = cols(station = col_character())) %>%
+                       col_types = cols(station = col_character(),
+                                    detection_time_ast=col_datetime(format="%Y/%m/%d %H:%M:%S"))) %>%
          # Change time zone
          mutate(detection_time_ast = force_tz(detection_time_ast, 
                                               "America/Virgin"))
@@ -68,7 +69,7 @@ trimPAT <- function(dataset, deadDates, arrayPullDate){
    # Save the transmitter ID
    trans <- dataset$transmitter[1]
    # Cut non-Brewers detections
-   dataset <- filter(dataset, station %in% statmaster$station)
+   dataset <- filter(dataset, station %in% statMaster$station)
    # Print starting date range
    cat("Starting date range for transmitter ", trans, ": \n", 
        as.character(range(dataset$date)[1]), " to ", 
@@ -76,11 +77,11 @@ trimPAT <- function(dataset, deadDates, arrayPullDate){
    # Cut beginning (remove through first full day after tagging)
    # AKA data start at the second midnight after tagging
    start <- filter(transMaster, transmitter == trans) %>%
-      select(release_date) %>% # find the tag date
+      dplyr::select(release_date) %>% # find the tag date
       pull + 1 # extract the day after the tag date
    dataset <- filter(dataset, date > start) # filter to start the next day
    # Cut end
-   end <- select(deadDates, gsub("-",".",trans)) %>% # find the dead date
+   end <- dplyr::select(deadDates, gsub("-",".",trans)) %>% # find the dead date
       pull # extract it
    # If a dead date exists, cut data after it
    if(!is.na(end)){

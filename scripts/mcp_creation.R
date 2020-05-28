@@ -125,7 +125,7 @@ makeMCP <- function(dataset, MCPpercent, subset = "all",
    dat_sp <- SpatialPoints(coords = dplyr::select(dat, coord_cols), 
                            proj4string = CRS(crs_proj))
    # Make the MCP
-   dat_mcp <- mcp(dat_sp, percent = MCPpercent, unout = "m2")
+   dat_mcp <- adehabitatHR::mcp(dat_sp, percent = MCPpercent, unout = "m2")
    # How big is it? These are the same, no matter the projection
    mcpArea <- round(as.data.frame(dat_mcp)$area, 1)
    cat("\n", paste0(as.character(MCPpercent), "% MCP Size (m^2): ", mcpArea),"\n")

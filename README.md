@@ -19,5 +19,6 @@ Note: these scripts rely heavily on the tidyverse and lubridate packages. There 
 - *transum.R* - creates a detection summary table
 - *plotrecdetday.R* - creates a plot of transmitter activity and temperature over time
 - *mcp_creation.R* - creates minimum convex polygons for each fish
+- *mcp_metrics.R* - calculates sizes and separation of minimum convex polygons for each fish
 - *temperature_analysis.R* - a frequency analysis of temperature associations
 

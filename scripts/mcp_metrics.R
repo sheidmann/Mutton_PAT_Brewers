@@ -2,11 +2,11 @@
 
 # Sarah Heidmann
 # Created 22 Jan 2018
-# Last modified 26 May 2020
+# Last modified 29 May 2020
 
 # Summary: calculates metrics of MCPs for Brewers Bay mutton snapper
 
-# Data inputs (choose one):
+# Data inputs:
 #     - data frames of MCP polygon vertices
 #         - 95% full, 50% full, 95% day, 95% night
 # Actions:
@@ -90,7 +90,8 @@ FullTable <- lapply(mcp_95 ,calcMCPsize, level="95", export="table") %>%
 FullTable <- lapply(mcp_50, calcMCPsize, level="50", export="table") %>% 
      bind_rows(FullTable)
 FullTable <- FullTable %>% 
-     arrange(Transmitter, desc(Level)) # Sort the output
+     arrange(Transmitter, desc(Level))  %>% # Sort the output
+        mutate(Size.km2 = Size.m2 / 1000000) # Convert to km2
 # Export full home range table
 write_excel_csv(FullTable, paste0(sinkPath, "MCP_Full_sizes.csv"))
 
@@ -102,9 +103,29 @@ DayNightTable <- lapply(mcp_day, calcMCPsize, level="day", export="table") %>%
 DayNightTable <- lapply(mcp_night, calcMCPsize, level="night", export="table") %>% 
      bind_rows(DayNightTable)
 DayNightTable <- DayNightTable %>%
-     arrange(Transmitter, Level)
+     arrange(Transmitter, Level) %>% # Sort the output
+        mutate(Size.km2 = Size.m2 / 1000000) # convert to km2
 # Export day/night activity space table
 write_excel_csv(DayNightTable, paste0(sinkPath, "MCP_DayNight_sizes.csv"))
+
+# Size summary statistics
+FullTable %>%
+        group_by(Level) %>%
+        summarize(minsize = min(Size.km2),
+                  maxsize = max(Size.km2),
+                  meansize = mean(Size.km2),
+                  sdsize = sd(Size.km2),
+                  nsize = length(Size.km2)) %>%
+        mutate(semsize = sdsize / sqrt(nsize))
+
+DayNightTable %>%
+        group_by(Level) %>%
+        summarize(minsize = min(Size.km2),
+                  maxsize = max(Size.km2),
+                  meansize = mean(Size.km2),
+                  sdsize = sd(Size.km2),
+                  nsize = length(Size.km2)) %>%
+        mutate(semsize = sdsize / sqrt(nsize))
 
 
 ##### Overlap Index of 50% MCPs #####
@@ -165,8 +186,6 @@ DayNightSep <- function(trans){
      sp_night<-SpatialPolygons(list(Polygons(list(Polygon(coords=
                                     dplyr::select(night, coord_cols))),1)),
                              proj4string = CRS(crs_proj))
-     plot(sp_day)
-     plot(sp_night, add=T)
      # Find the overlap index
      OI <- raster::intersect(sp_day,sp_night) %>% # take the intersection
           raster::area() %>% tibble(OverlapArea=.) %>% # find the overlap area
@@ -190,3 +209,19 @@ DayNightSepTable <- lapply(names(mcp_day), DayNightSep) %>% bind_rows()
 
 # Export day/night activity space table
 write_excel_csv(DayNightSepTable, paste0(sinkPath, "MCP_DayNight_separation.csv"))
+
+# Day/night separation summary statistics
+# Overlap Index summary
+DayNightSepTable %>%
+        summarize(meanoverlap = mean(OverlapI),
+                  sdoverlap = sd(OverlapI),
+                  noverlap = length(OverlapI)) %>%
+        mutate(semoverlap = sdoverlap / sqrt(noverlap))
+# Centroid separation summary
+DayNightSepTable %>%
+        summarize(minsep = min(CentroidSep),
+                  maxsep = max(CentroidSep),
+                  meansep = mean(CentroidSep),
+                  sdsep = sd(CentroidSep),
+                  nsep = length(CentroidSep)) %>%
+        mutate(semsep = sdsep / sqrt(nsep))

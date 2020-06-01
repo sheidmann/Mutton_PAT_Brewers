@@ -48,6 +48,11 @@ mcp_night <- lapply(filenames, readMCP, sourcePaths[4])
 names(mcp_night) <- gsub(".csv","", filenames)
 mcp_night
 
+# Read the BBMM sizes
+bbmm <- read_csv("data/otherdata/BBMM_Full_sizes.csv") %>%
+        rename(BBMM_Size.m2 = Size.m2,
+               BBMM_Size.km2 = Size.km2)
+
 # Set the output location
 sinkPath <- "outputs/"
 
@@ -108,7 +113,8 @@ DayNightTable <- DayNightTable %>%
 # Export day/night activity space table
 #write_excel_csv(DayNightTable, paste0(sinkPath, "MCP_DayNight_sizes.csv"))
 
-# Size summary statistics
+##### Size summary statistics #####
+# 95% and 50% full MCPs
 FullTable %>%
         group_by(Level) %>%
         summarize(minsize = min(Size.km2),
@@ -118,6 +124,16 @@ FullTable %>%
                   nsize = length(Size.km2)) %>%
         mutate(semsize = sdsize / sqrt(nsize))
 
+# 95% full BBMMs
+bbmm %>%
+        summarize(minsize = min(BBMM_Size.km2),
+                  maxsize = max(BBMM_Size.km2),
+                  meansize = mean(BBMM_Size.km2),
+                  sdsize = sd(BBMM_Size.km2),
+                  nsize = length(BBMM_Size.km2)) %>%
+        mutate(semsize = sdsize / sqrt(nsize))
+
+# 95% day and night MCPs
 DayNightTable %>%
         group_by(Level) %>%
         summarize(minsize = min(Size.km2),
@@ -127,21 +143,39 @@ DayNightTable %>%
                   nsize = length(Size.km2)) %>%
         mutate(semsize = sdsize / sqrt(nsize))
 
+##### Size comparison tests #####
+# Are MCPs and BBMMs different sizes?
+testMCP_BBMM <- FullTable %>%
+        filter(Level==95) %>% # Take out the 50% MCPs
+        rename(MCP_Size.m2 = Size.m2, # Change shared names
+               MCP_Size.km2 = Size.km2) %>% 
+        left_join(bbmm, by="Transmitter") # Join to BBMM size table
+# Since small sample size, need to check for normality with Shapiro-Wilks
+# null: data is normal; alternative: data not normal
+shapiro.test(testMCP_BBMM$MCP_Size.m2) # p = 0.66 (normal)
+shapiro.test(testMCP_BBMM$BBMM_Size.m2) # p = 0.36 (normal)
+# Test for equal variance
+var.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2)
+# No evidence that variances are not equal (p=0.7)
+# Test hypothesis that MCP != BBMM
+t.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2, 
+       paired = TRUE, var.equal = TRUE)
+# Significant at p=0.04
+
 # Are day and night spaces different sizes?
 # paired t-test: two-tailed
 # They are paired because we're matching them to an individual
 # Cast the data so day and night have own columns
 testDayNight <- pivot_wider(DayNightTable, id_cols = Transmitter,
                             names_from = Level, values_from = Size.m2)
-# Since small sample size, need to check for normality with Shapiro-Wilks
-# null: data is normal; alternative: data not normal
+# check for normality with Shapiro-Wilks
 shapiro.test(testDayNight$day) # p = 0.22 (normal)
 shapiro.test(testDayNight$night) # p = 0.88 (normal)
 # Test for equal variance
 var.test(testDayNight$day, testDayNight$night)
 # No evidence that variances are not equal
 
-# Test hypothesis that night > day
+# Test hypothesis that night != day
 t.test(testDayNight$day, testDayNight$night, paired = TRUE, var.equal = TRUE)
 # Nonsignificant at p=0.30
 

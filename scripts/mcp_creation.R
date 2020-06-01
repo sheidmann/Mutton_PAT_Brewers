@@ -21,7 +21,6 @@
 
 # Load the libraries
 library(tidyverse)
-library(lubridate)
 library(sp)
 library(adehabitatHR)
 

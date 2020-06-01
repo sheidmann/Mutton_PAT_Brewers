@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 22 Jan 2018
-# Last modified 29 May 2020
+# Last modified 1 Jun 2020
 
 # Summary: calculates metrics of MCPs for Brewers Bay mutton snapper
 
@@ -93,7 +93,7 @@ FullTable <- FullTable %>%
      arrange(Transmitter, desc(Level))  %>% # Sort the output
         mutate(Size.km2 = Size.m2 / 1000000) # Convert to km2
 # Export full home range table
-write_excel_csv(FullTable, paste0(sinkPath, "MCP_Full_sizes.csv"))
+#write_excel_csv(FullTable, paste0(sinkPath, "MCP_Full_sizes.csv"))
 
 
 # Create the day/night activity space table
@@ -106,7 +106,7 @@ DayNightTable <- DayNightTable %>%
      arrange(Transmitter, Level) %>% # Sort the output
         mutate(Size.km2 = Size.m2 / 1000000) # convert to km2
 # Export day/night activity space table
-write_excel_csv(DayNightTable, paste0(sinkPath, "MCP_DayNight_sizes.csv"))
+#write_excel_csv(DayNightTable, paste0(sinkPath, "MCP_DayNight_sizes.csv"))
 
 # Size summary statistics
 FullTable %>%
@@ -127,6 +127,23 @@ DayNightTable %>%
                   nsize = length(Size.km2)) %>%
         mutate(semsize = sdsize / sqrt(nsize))
 
+# Are day and night spaces different sizes?
+# paired t-test: two-tailed
+# They are paired because we're matching them to an individual
+# Cast the data so day and night have own columns
+testDayNight <- pivot_wider(DayNightTable, id_cols = Transmitter,
+                            names_from = Level, values_from = Size.m2)
+# Since small sample size, need to check for normality with Shapiro-Wilks
+# null: data is normal; alternative: data not normal
+shapiro.test(testDayNight$day) # p = 0.22 (normal)
+shapiro.test(testDayNight$night) # p = 0.88 (normal)
+# Test for equal variance
+var.test(testDayNight$day, testDayNight$night)
+# No evidence that variances are not equal
+
+# Test hypothesis that night > day
+t.test(testDayNight$day, testDayNight$night, paired = TRUE, var.equal = TRUE)
+# Nonsignificant at p=0.30
 
 ##### Overlap Index of 50% MCPs #####
 # To determine territoriality across the bay
@@ -144,8 +161,8 @@ ggplot() +
 # Create the SpatialPolygons
 sp50_all <- lapply(mcp_50, calcMCPsize, export="sp")
 # Calculate the total area of overlap by adding
-#     24797/59271
-#     45334/45339
+#     24797/59271 overlap
+#     45334/45339 overlap
 OverlapArea <- raster::area(raster::intersect(sp50_all[["A69-1601-24797"]],
                                               sp50_all[["A69-1601-59271"]])) + 
      raster::area(raster::intersect(sp50_all[["A69-1601-45334"]], 

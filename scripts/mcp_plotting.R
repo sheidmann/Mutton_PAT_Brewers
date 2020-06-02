@@ -37,6 +37,10 @@ mcp_50
 # Read in the land shapefile
 landSTTSTJ <- read_csv("data/otherdata/STTSTJland.csv")
 
+# Read in the catch locations
+transmaster <- read_csv("data/otherdata/mnb_mutton_transmitter_master_2017.csv") %>%
+        filter(transmitter %in% gsub(".csv","",filenames))
+
 # Create the color list for plotting (colorblind friendly)
 mnbColors <- c("#0072B2", #"#CC79A7",  # 36029 removed
                "#E69F00", #"#999999", # 45336 removed
@@ -62,7 +66,7 @@ scalebar <- data.frame(x=c(anchor_s$x,anchor_s$x,anchor_s$x,# left tick
                            anchor_s$y, # line
                            anchor_s$y+ht_s,anchor_s$y-ht_s))  # right tick
 # Set parameters for North arrow
-anchor_n <-data.frame(x=291000,y=2029900)
+anchor_n <-data.frame(x=291200,y=2029900)
 ht_n <- 150 # height of the arrow
 wd_n <- 100 # width of the arrow
 northarrow <- data.frame(x=c(anchor_n$x, anchor_n$x-(wd_n/2), # top, left bottom
@@ -81,16 +85,27 @@ ggplot() +
         geom_path(data = mcp_95, aes(x = x, y = y, color = transmitter), linetype = 2) +
         # Add the solid 50% polygon (no points)
         geom_path(data = mcp_50, aes(x = x, y = y, color = transmitter)) +
+        # Add the catch location
+        geom_point(data = transmaster, shape = 24, size = 3,
+                   aes(x=release_x,y=release_y,
+                       fill=transmitter, color = transmitter)) +
+        # Facet by transmitter
+        facet_wrap(~transmitter, ncol = 2) +
+        geom_text(size = 6, color = "white", data = mcp_95, # label the panels
+                  aes(x=290600,y=2029850, family = "Times New Roman", 
+                      label = substr(transmitter,10,14))) +
         # Add the scale bar
         geom_path(data = scalebar, aes(x=x,y=y), color = "black") +
-        geom_text(data = anchor_s, aes(x=x+100,y=y-80), color = "black", 
-                  label = "1 km", family = "Times New Roman", size = 6) +
+        geom_text(data = anchor_s, aes(x=x+150,y=y-80), color = "black", 
+                  label = "1 km", family = "Times New Roman", size = 4) +
         # Add the north arrow
         geom_polygon(data = northarrow, aes(x=x,y=y), fill = "white") +
         # Color formatting
         scale_color_manual("",values = mnbColors,
                            labels = gsub("A69-1601-","",names(mnbColors))) +
-        guides(colour = guide_legend(override.aes = list(size=5))) +
+        scale_fill_manual("",values = mnbColors,
+                           labels = gsub("A69-1601-","",names(mnbColors))) +
+        guides(colour = FALSE, fill = FALSE) +
         # Other formatting
         coord_equal(xlim = c(XMin,XMax),
                     ylim = c(YMin,YMax)) +
@@ -99,9 +114,7 @@ ggplot() +
         theme(plot.margin=unit(c(0.1,0.1,0,0), "in"),
               panel.background = element_blank(),
               panel.border=element_rect(colour="black",size=1, fill = NA),
-              legend.key = element_blank(),
-              legend.position = "top",
-              legend.text = element_text(family = "Times New Roman", size = 16),
+              strip.background = element_blank(), strip.text = element_blank(),
               axis.text = element_blank(), axis.ticks = element_blank())
 # Save the plot
 ggsave(paste0(sinkPath,"MCP_allfacet.tiff"), width = 5.5, height = 9, units = "in")

@@ -19,6 +19,7 @@ Note: these scripts rely heavily on the tidyverse and lubridate packages. There 
 - *transum.R* - creates a detection summary table
 - *plotrecdetday.R* - creates a plot of transmitter activity and temperature over time
 - *mcp_creation.R* - creates minimum convex polygons for each fish
+- *mcp_plotting.R* - plots minimum convex polygons for all fish
 - *bbmm_creation.R* - creates Brownian bridge movement models for each fish
 - *bbmm_plotting.R* - plots Brownian bridge movement model rasters for all fish
 - *mcp_metrics.R* - calculates sizes and separation of minimum convex polygons for each fish

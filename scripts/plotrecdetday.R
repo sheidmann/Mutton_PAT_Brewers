@@ -34,9 +34,9 @@ importMNB <- function(filename){
       # Return the dataset
       return(dat)
 }
-mnbls <- lapply(filenames, importMNB) # read all the files into a list
-names(mnbls) <- gsub(".csv", "", filenames) # take .csv out of the names
-mnbls # check data
+mnb_ls <- lapply(filenames, importMNB) # read all the files into a list
+names(mnb_ls) <- gsub(".csv", "", filenames) # take .csv out of the names
+mnb_ls # check data
 
 # Import the temperature values
 hobo <- read_csv("data/otherdata/mnb_temp_all_201410_201711.csv") %>%
@@ -56,7 +56,7 @@ sinkPath <- "outputs/"
 # dark blue, pink, orange, grey, yellow, green, light blue, red
 mnbColors <- c("#0072B2", "#CC79A7", "#E69F00", "#999999",
                "#F0E442", "#009E73", "#56B4E9", "#D55E00")
-mnbColors <- setNames(mnbColors, substr(names(mnbls),10,14)) # link to transmitters
+mnbColors <- setNames(mnbColors, substr(names(mnb_ls),10,14)) # link to transmitters
 
 ##### Summarize data by date #####
 # Plot number of detections and receivers per day over time
@@ -88,6 +88,18 @@ sumRecDetDay <- function(dataset){
 recDetDay_all <- lapply(mnbls, sumRecDetDay) %>%
    bind_rows()
 
+# Summarize and add temperature
+recDetDay_all <- hobo %>% # start with raw
+   add_column(type="Temperature (°C)") %>% # set type
+   group_by(date, type) %>% 
+   summarize(value = mean(temp_c)) %>% # mean temp per day
+   ungroup() %>%
+   filter(date >= range(recDetDay_all$date)[1] & 
+             date <= range(recDetDay_all$date)[2]) %>% # use only desired period
+   add_column(transmitter = as.character(NA)) %>% # add column for binding
+   bind_rows(recDetDay_all) # bind to recDetDay
+
+##### Summary statistics #####
 # What was the range of stations visited per day?
 recDetDay_all %>%
    filter(type == "Stations per day") %>%
@@ -105,17 +117,6 @@ recDetDay_all %>%
    group_by(transmitter) %>%
    # number of days with detections / number of days
    summarise(RI = sum(value!=0) / length(value))
-
-# Summarize and add temperature
-recDetDay_all <- hobo %>% # start with raw
-   add_column(type="Temperature (°C)") %>% # set type
-   group_by(date, type) %>% 
-   summarize(value = mean(temp_c)) %>% # mean temp per day
-   ungroup() %>%
-   filter(date >= range(recDetDay_all$date)[1] & 
-             date <= range(recDetDay_all$date)[2]) %>% # use only desired period
-   add_column(transmitter = as.character(NA)) %>% # add column for binding
-   bind_rows(recDetDay_all) # bind to recDetDay
 
 
 ##### Plot #####
@@ -139,7 +140,7 @@ ggplot(data = recDetDay_all) +
                 date_labels = "%Y-%b") +
    # set the colors
    scale_color_manual("",values=c(mnbColors),
-                      guide = guide_legend(nrow=1)) +
+                      guide = guide_legend(nrow=1, override.aes=list(size=5))) +
    # formatting
    theme(axis.text.x = element_text(angle = -90), 
          text = element_text(size=16, family = "Times New Roman"),

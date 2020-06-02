@@ -2,9 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-
 Mutton_PAT_Brewers.Rproj
-
 .DS_Store
-
 data/
+outputs/

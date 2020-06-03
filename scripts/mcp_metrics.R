@@ -142,6 +142,20 @@ DayNightTable %>%
                   sdsize = sd(Size.km2),
                   nsize = length(Size.km2)) %>%
         mutate(semsize = sdsize / sqrt(nsize))
+# Compare size across day and night
+# See full table
+DayNightTable %>%
+        pivot_wider(id_cols = Transmitter, # Change format
+                    names_from = Level, values_from = Size.m2) %>%
+        mutate(nightpercentofday = night / day) 
+# Get summary
+DayNightTable %>%
+        pivot_wider(id_cols = Transmitter, # Change format
+                    names_from = Level, values_from = Size.m2) %>%
+        mutate(nightpercentofday = night / day) %>%
+        summarize(minper = min(nightpercentofday),
+                  maxper = max(nightpercentofday),
+                  meanper = mean(nightpercentofday))
 
 ##### Size comparison tests #####
 # Are MCPs and BBMMs different sizes?
@@ -152,15 +166,15 @@ testMCP_BBMM <- FullTable %>%
         left_join(bbmm, by="Transmitter") # Join to BBMM size table
 # Since small sample size, need to check for normality with Shapiro-Wilks
 # null: data is normal; alternative: data not normal
-shapiro.test(testMCP_BBMM$MCP_Size.m2) # p = 0.66 (normal)
+shapiro.test(testMCP_BBMM$MCP_Size.m2) # p = 0.64 (normal)
 shapiro.test(testMCP_BBMM$BBMM_Size.m2) # p = 0.36 (normal)
 # Test for equal variance
 var.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2)
-# No evidence that variances are not equal (p=0.7)
+# No evidence that variances are not equal (p=0.99)
 # Test hypothesis that MCP != BBMM
 t.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2, 
        paired = TRUE, var.equal = TRUE)
-# Significant at p=0.04
+# Significant at p=0.02
 
 # Are day and night spaces different sizes?
 # paired t-test: two-tailed
@@ -169,15 +183,16 @@ t.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2,
 testDayNight <- pivot_wider(DayNightTable, id_cols = Transmitter,
                             names_from = Level, values_from = Size.m2)
 # check for normality with Shapiro-Wilks
-shapiro.test(testDayNight$day) # p = 0.22 (normal)
-shapiro.test(testDayNight$night) # p = 0.88 (normal)
+shapiro.test(testDayNight$day) # p = 0.29 (normal)
+shapiro.test(testDayNight$night) # p = 0.40 (normal)
 # Test for equal variance
 var.test(testDayNight$day, testDayNight$night)
-# No evidence that variances are not equal
+# Variances are not equal (p < 0.001)
+# Account for this in the test below
 
 # Test hypothesis that night != day
-t.test(testDayNight$day, testDayNight$night, paired = TRUE, var.equal = TRUE)
-# Nonsignificant at p=0.30
+t.test(testDayNight$day, testDayNight$night, paired = TRUE, var.equal = FALSE)
+# Significant at p=0.02
 
 ##### Overlap Index of 50% MCPs #####
 # To determine territoriality across the bay
@@ -202,8 +217,8 @@ OverlapArea <- raster::area(raster::intersect(sp50_all[["A69-1601-24797"]],
      raster::area(raster::intersect(sp50_all[["A69-1601-45334"]], 
                                     sp50_all[["A69-1601-45339"]]))
 # Calculate the total area of all 50% MCPs
-TotalArea50 <- raster::union(unlist(sp50_all)) %>% 
-     raster::area() %>% # area of each listed polygon
+TotalArea50 <- unlist(sp50_all) %>% 
+     lapply(raster::area) %>% # area of each listed polygon
      unlist() %>% # take them out of the list
      sum() # add them together
 # Calculate the overlap index as area of overlap divided by total area
@@ -259,7 +274,7 @@ DayNightSep <- function(trans){
 DayNightSepTable <- lapply(names(mcp_day), DayNightSep) %>% bind_rows()
 
 # Export day/night activity space table
-write_excel_csv(DayNightSepTable, paste0(sinkPath, "MCP_DayNight_separation.csv"))
+#write_excel_csv(DayNightSepTable, paste0(sinkPath, "MCP_DayNight_separation.csv"))
 
 # Day/night separation summary statistics
 # Overlap Index summary

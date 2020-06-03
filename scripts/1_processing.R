@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 8 Oct 2018
-# Last modified 15 May 2020
+# Last modified 3 Jun 2020
 
 # Summary:
 # Data inputs:
@@ -38,9 +38,9 @@ importMNB <- function(filename){
    # Return the dataset
    return(dat)
 }
-mnbls <- lapply(filenames, importMNB)
-names(mnbls) <- gsub(".csv", "", filenames)
-mnbls
+mnb_ls <- lapply(filenames, importMNB)
+names(mnb_ls) <- gsub(".csv", "", filenames)
+mnb_ls
 
 sinkPath <- "data/2_processed_SLH/"
 
@@ -55,7 +55,7 @@ negLong <- function(dataset){
    #dataset %>% dplyr::select(long_nad83) %>% summary() # check them
    return(dataset)
 }
-mnbls <- lapply(mnbls, negLong)
+mnb_ls <- lapply(mnb_ls, negLong)
 
 ##### Delete spawning detections #####
 # Load list of active Brewers receivers
@@ -66,7 +66,7 @@ delStat <- function(dataset){
       dat <- filter(dataset, station %in% statmaster$station)
       return(dat)
 }
-mnbls_proc <- lapply(mnbls, delStat)
+mnb_ls_proc <- lapply(mnb_ls, delStat)
 
 ##### Split date #####
 splitDate <- function(dataset){
@@ -78,7 +78,7 @@ splitDate <- function(dataset){
       print("Date split complete")
       return(dataset)
 }
-mnbls_proc <- lapply(mnbls_proc, splitDate)
+mnb_ls_proc <- lapply(mnb_ls_proc, splitDate)
 
 ##### Calculate time differences #####
 calcTimeDiff <- function(dataset){
@@ -89,23 +89,27 @@ calcTimeDiff <- function(dataset){
       print("Time difference calculation complete")
       return(dataset)
 }
-mnbls_proc <- lapply(mnbls_proc, calcTimeDiff)
+mnb_ls_proc <- lapply(mnb_ls_proc, calcTimeDiff)
 
 ##### Classify day/night #####
 suntab <- read_csv("data/otherdata/sttsuntable_14_18.csv", 
                    col_types = cols(rise = col_datetime(format = "%Y/%m/%d %H:%M:%S"),
-                                    set = col_datetime(format = "%Y/%m/%d %H:%M:%S")))
+                                    set = col_datetime(format = "%Y/%m/%d %H:%M:%S"))) %>%
+   # Change time zone
+   mutate(rise = force_tz(rise, "America/Virgin"),
+          set = force_tz(set, "America/Virgin"))
 addDayNight <- function(dataset){
    dataset <- left_join(dataset, suntab, by="date")
    dataset <- dataset %>%
       mutate(daynight=case_when(detection_time_ast<rise-3600 | detection_time_ast>set+3600~"night",
                                 detection_time_ast>rise+3600 & detection_time_ast<set-3600~"day",
                                 (detection_time_ast>=rise-3600 & detection_time_ast<=rise+3600) |
-                                   (detection_time_ast>=set-3600 & detection_time_ast<=set+3600)~"crep"))
+                                   (detection_time_ast>=set-3600 & detection_time_ast<=set+3600)~"crep")) %>%
+      select(-rise, -set)
    print("Day/night classification complete")
    return(dataset)
 }
-mnbls_proc <- lapply(mnbls_proc, addDayNight)
+mnb_ls_proc <- lapply(mnb_ls_proc, addDayNight)
 
 # add UTM20 positions (x_UTM20 and y_UTM20) so don’t have to project every time
 projUTM20 <- function(dataset){
@@ -118,11 +122,11 @@ projUTM20 <- function(dataset){
       dataset <- bind_cols(dataset, coords)
       return(dataset)
 }
-mnbls_proc <- lapply(mnbls_proc, projUTM20)
+mnb_ls_proc <- lapply(mnb_ls_proc, projUTM20)
 
 ##### Export #####
-for(trans in names(mnbls_proc)){
-      write_excel_csv(mnbls_proc[[trans]], paste0(sinkPath, trans,".csv"))
+for(trans in names(mnb_ls_proc)){
+      write_excel_csv(mnb_ls_proc[[trans]], paste0(sinkPath, trans,".csv"))
 }
 
 

@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 15 Oct 2018
-# Last modified 18 May 2020
+# Last modified 3 Jun 2020
 
 # Summary:
 # Data inputs:
@@ -35,16 +35,12 @@ importMNB <- function(filename){
       # Return the dataset
       return(dat)
 }
-mnbls <- lapply(filenames, importMNB) # read all the files into a list
-names(mnbls) <- gsub(".csv", "", filenames) # take .csv out of the names
-# names(mnbls) # check it
-
-# Check one file
-# mnbls[[1]]
-# tz(mnbls[[1]]$detection_time_ast)
+mnb_ls <- lapply(filenames, importMNB) # read all the files into a list
+names(mnb_ls) <- gsub(".csv", "", filenames) # take .csv out of the names
+mnb_ls # check it
 
 # Make a list of the transmitters
-transList <- names(mnbls) 
+transList <- names(mnb_ls) 
 
 # Import the transmitter master file
 transMaster <- read_csv("data/otherdata/mnb_mutton_transmitter_master_2017.csv")
@@ -99,10 +95,10 @@ trimPAT <- function(dataset, deadDates, arrayPullDate){
    return(dataset)
 }
 # Apply to the list of datasets
-mnbls_cut <- lapply(mnbls, trimPAT, deadDates, finalArrayPullDate)
+mnb_ls_cut <- lapply(mnb_ls, trimPAT, deadDates, finalArrayPullDate)
 
 ##### Export the data #####
-for(dataset in mnbls_cut){
+for(dataset in mnb_ls_cut){
    trans <- dataset$transmitter[1] # dynamically name the file
    write_excel_csv(dataset, paste0(sinkPath, trans, ".csv"))
 }

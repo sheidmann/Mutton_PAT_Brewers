@@ -12,11 +12,12 @@ Conclusions: Individuals were highly resident to territories in Brewers Bay; two
 Keywords: acoustic telemetry, home range, US Virgin Islands, movement ecology, Lutjanidae, *Lutjanus analis*
 
 **Analysis Scripts**\
-Note: these scripts rely heavily on the tidyverse and lubridate packages. There is a line in each one to load the appropriate libraries.
+Note: these scripts rely heavily on the tidyverse.
 - *1_processing.R* - formats the raw data
 - *2_cutting.R* - trims datasets of behavioral abnormalities
 - *3_binning.R* - bins detections into 30-min periods
 - *transum.R* - creates a detection summary table
+- *detectionrates.R* - compare daytime and nighttime detection rates
 - *plotrecdetday.R* - creates a plot of transmitter activity and temperature over time
 - *mcp_creation.R* - creates minimum convex polygons for each fish
 - *mcp_plotting.R* - plots minimum convex polygons for all fish

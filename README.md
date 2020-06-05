@@ -24,5 +24,6 @@ Note: these scripts rely heavily on the tidyverse.
 - *bbmm_creation.R* - creates Brownian bridge movement models for each fish
 - *bbmm_plotting.R* - plots Brownian bridge movement model rasters for all fish
 - *mcp_metrics.R* - calculates sizes and separation of minimum convex polygons for each fish
+- *permanova.R* - performs a repeated measures PERMANOVA on space use composition
 - *temperature_analysis.R* - a frequency analysis of temperature associations
 

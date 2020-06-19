@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 27 Jan 2018
-# Last modified 6 Jun 2020
+# Last modified 19 Jun 2020
 
 # Summary: calculates habitat composition of MCPs for Brewers Bay mutton snapper
 
@@ -11,7 +11,7 @@
 #         - 95% full, 50% full, 95% day, 95% night
 # Actions:
 #     - calculates percent coverage of each habitat type of each MCP
-#     - calculates reef:seagrass ratio for each MCP
+#     - calculates seagrass:reef ratio for each MCP
 #     - calculates summary statistics and t-tests
 # Data exports:
 #     - table of full 95% and 50% MCP habitat composition
@@ -53,20 +53,27 @@ mnb_bh <- readOGR(dsn = "/Volumes/Squishy2/2016_MareNostrum_BenthicHabitat/01_GI
                   layer = "2016_BHabitat_BPBay_STT_1-1K_NAD83_UTM_20N_V6")
 plot(mnb_bh)
 crs(mnb_bh)
+# deletes space at end (problems with intersect)
+mnb_bh@proj4string <- crs(as.character(crs(mnb_bh))) 
 
 # Set the output location
 sinkPath <- "outputs/"
 
 ##### Find habitat composition #####
-# The types in the raw benthic habitat map is a bit confusing.
-# We use M_STRUCT to see if coral reef, and M_COVER to see if seagrass.
+# The types in the raw benthic habitat map are a bit confusing.
+# Let's look at all the options present.
+habitats <- as_tibble(mnb_bh[c("ZONE","M_STRUCT","D_STRUCT","P_HARD","M_COVER","P_COVER","COVER","P_CORAL")]) %>%
+        unique() %>%
+        arrange(M_STRUCT,D_STRUCT,M_COVER)
+# We use D_STRUCT to see if coral reef, and M_COVER to see if seagrass.
 # All other types will be "other"
 # Add my own column to make it easy.
-mnb_bh$mytype <- case_when(mnb_bh$M_STRUCT=="Coral Reef and Hardbottom"~"CoralReef",
-                           mnb_bh$M_COVER=="Seagrass"~"Seagrass",
-                           TRUE~"Other")
+reeftypes <- c("Aggregate Reef","Aggregated Patch Reefs","Individual Patch Reef")
+mnb_bh$mytype <- case_when(mnb_bh$D_STRUCT %in% reeftypes ~ "CoralReef",
+                           mnb_bh$M_COVER=="Seagrass" ~ "Seagrass",
+                           TRUE ~ "Other")
 # Create a function to convert to SpatialPolygons and calculate habitat composition
-habComp <- function(dataset, level, export){
+habComp <- function(dataset, level="", export){
      trans <- dataset$transmitter[1] # extract the transmitter
      proj <- ifelse(names(dataset)[1]=="x", TRUE, FALSE) # check if projected
      crs_proj <- ifelse(proj, # check projection
@@ -91,16 +98,18 @@ habComp <- function(dataset, level, export){
                              habtype = habs$mytype, # set the types
                              Area.m2=raster::area(habs)) %>% # set the areas
              group_by(Transmitter,Level,habtype) %>% 
-             summarise(Area.m2 = sum(Area.m2)) %>% # sum duplicate type polygons
-             ungroup() %>%
+             summarise(Area.m2 = sum(Area.m2), # sum duplicate type polygons
+                       .groups="drop") %>% # alternative to ungroup()
              mutate(percent = round(Area.m2 / totalArea*100,1)) %>% # calc percent cover
              pivot_wider(id_cols=c(Transmitter,Level), # give hab types own columns
                          names_from = habtype, values_from = percent) %>%
-             add_column(!!!c("CoralReef"=0, # if add missing columns for ratio
-                             "Seagrass"=0)[!c("CoralReef",
-                                              "Seagrass") %in% names(.)]) %>%
-     mutate(ReefSeagrassRatio=round(log10(round(CoralReef)/
-                                            round(Seagrass)),1)) # calculate ratio
+             add_column(!!!c("Seagrass"=0, # if add missing columns for ratio
+                             "CoralReef"=0,
+                             "Other"=0)[!c("Seagrass","CoralReef",
+                                           "Other") %in% names(.)]) %>%
+             relocate(c(Seagrass,CoralReef,Other), .after=Level) %>%
+     mutate(SeagrassReefRatio=round(log10(round(Seagrass)/
+                                            round(CoralReef)),1)) # calculate ratio
      # Export either the table of sizes or the SpatialPolygons object
      if(export=="table"){
           return(table)
@@ -111,34 +120,42 @@ habComp <- function(dataset, level, export){
 # Create the full home range table
 FullHabTable <- tibble::tibble(Transmitter = character(), # create empty table
                             Level = character(),
-                            CoralReef = double(),
                             Seagrass = double(),
+                            CoralReef = double(),
                             Other = double(),
-                            ReefSeagrassRatio=double())
+                            SeagrassReefRatio=double())
 FullHabTable <- lapply(mcp_95 ,habComp, level="95", export="table") %>% 
+        unname() %>%
         bind_rows(FullHabTable) # add 95% MCPs
 FullHabTable <- lapply(mcp_50, habComp, level="50", export="table") %>% 
+        unname() %>%
         bind_rows(FullHabTable) # add 50% MCPs
 FullHabTable <- FullHabTable %>% 
         replace(is.na(.),0) %>% # change NAs to 0 coverage
         arrange(Transmitter, desc(Level)) %>% # sort the rows
         dplyr::select(Transmitter,Level, # sort the columns
-                      CoralReef,Seagrass,Other,ReefSeagrassRatio)
+                      Seagrass,CoralReef,Other,SeagrassReefRatio)
+# Replace infinite values with max ratio of 2
+FullHabTable[which(!is.finite(FullHabTable$SeagrassReefRatio)),]$SeagrassReefRatio <- 2
 
 # Export full home range table
 # write_excel_csv(FullHabTable, paste0(sinkPath, "MCP_Full_habitats.csv"))
 
 # Create the day/night space table
 DayNightHabTable <- FullHabTable[0,1:6] # create empty table
-DayNightHabTable <- lapply(mcp_day ,habComp, level="day", export="table") %>% 
+DayNightHabTable <- lapply(mcp_day ,habComp, level="day", export="table") %>%
+        unname() %>%
         bind_rows(DayNightHabTable) # add day MCPs
 DayNightHabTable <- lapply(mcp_night, habComp, level="night", export="table") %>% 
+        unname() %>%
         bind_rows(DayNightHabTable) # add night MCPs
 DayNightHabTable <- DayNightHabTable %>% 
         replace(is.na(.),0) %>% # Change NAs to 0 coverage
         arrange(Transmitter, Level) %>%# Sort the rows
         dplyr::select(Transmitter,Level, # sort the columns
-                      CoralReef,Seagrass,Other,ReefSeagrassRatio)
+                      Seagrass,CoralReef,Other,SeagrassReefRatio)
+# Replace infinite values with max ratio of 2
+DayNightHabTable[which(!is.finite(DayNightHabTable$SeagrassReefRatio)),]$SeagrassReefRatio <- 2
 # Export full home range table
 # write_excel_csv(DayNightHabTable, paste0(sinkPath, "MCP_DayNight_habitats.csv"))
 
@@ -147,18 +164,17 @@ DayNightHabTable <- DayNightHabTable %>%
 # Mean reef and seagrass coverage
 FullHabTable %>%
         filter(Level=="95") %>%
-        summarise(meanreef = mean(CoralReef),
-                  meanseagrass=mean(Seagrass),
-                  sereef = sd(CoralReef)/sqrt(length(CoralReef)),
-                  meanratio=mean(ReefSeagrassRatio),
-                  seratio=sd(ReefSeagrassRatio)/sqrt(length(ReefSeagrassRatio)))
+        summarise(meanseagrass=mean(Seagrass),
+                  meanreef = mean(CoralReef),
+                  meanratio=mean(SeagrassReefRatio),
+                  seratio=sd(SeagrassReefRatio)/sqrt(length(SeagrassReefRatio)))
 
-# Compare coralreef:seagrass ratio to an equal ratio of 0
+# Compare seagrass:reef ratio to an equal ratio of 0
 # Since small sample size, need to check for normality with Shapiro-Wilks
 # null: data is normal; alternative: data not normal
 # First remove the infinite value
-ratios <- filter(FullHabTable,Level =="95")$ReefSeagrassRatio
-shapiro.test(ratios) # p = 0.29 (normal)
+ratios <- filter(FullHabTable,Level =="95")$SeagrassReefRatio
+shapiro.test(ratios) # p = 0.36 (normal)
 # Test hypothesis that ratio != 0
 t.test(ratios, mu=0)
 # significant at p <0.01
@@ -167,31 +183,28 @@ t.test(ratios, mu=0)
 # Day summary
 DayNightHabTable %>%
         filter(Level=="day") %>%
-        summarise(meanreef = mean(CoralReef),
-                  meanseagrass=mean(Seagrass),
-                  sereef = sd(CoralReef)/sqrt(length(CoralReef)),
-                  meanratio=mean(ReefSeagrassRatio),
-                  seratio=sd(ReefSeagrassRatio)/sqrt(length(ReefSeagrassRatio)))
+        summarise(meanseagrass=mean(Seagrass),
+                  meanreef = mean(CoralReef),
+                  meanratio=mean(SeagrassReefRatio),
+                  seratio=sd(SeagrassReefRatio)/sqrt(length(SeagrassReefRatio)))
 # Night summary
-DayNightHabTable[8,6] <- -2 # Replace the infinite value
 DayNightHabTable %>%
         filter(Level=="night") %>%
-        summarise(meanreef = mean(CoralReef),
-                  meanseagrass=mean(Seagrass),
-                  sereef = sd(CoralReef)/sqrt(length(CoralReef)),
-                  meanratio=mean(ReefSeagrassRatio),
-                  seratio=sd(ReefSeagrassRatio)/sqrt(length(ReefSeagrassRatio)))
+        summarise(meanseagrass=mean(Seagrass),
+                  meanreef = mean(CoralReef),
+                  meanratio=mean(SeagrassReefRatio),
+                  seratio=sd(SeagrassReefRatio)/sqrt(length(SeagrassReefRatio)))
 
 # Paired t-test of ratio between day and night
-dayratio <- DayNightHabTable %>% filter(Level =="day") %>% .$ReefSeagrassRatio
-nightratio <- DayNightHabTable %>% filter(Level =="night") %>% .$ReefSeagrassRatio
+dayratio <- DayNightHabTable %>% filter(Level =="day") %>% .$SeagrassReefRatio
+nightratio <- DayNightHabTable %>% filter(Level =="night") %>% .$SeagrassReefRatio
 # Since small sample size, need to check for normality with Shapiro-Wilks
 # null: data is normal; alternative: data not normal
-shapiro.test(dayratio) # p = 0.25 (normal)
-shapiro.test(nightratio) # p = 0.67 (normal)
+shapiro.test(dayratio) # p = 0.32 (normal)
+shapiro.test(nightratio) # p = 0.03 (not normal...)
 # Test for equal variance
 var.test(dayratio,nightratio)
-# No evidence that variances are not equal (p=0.49)
+# No evidence that variances are not equal (p=0.79)
 # Test hypothesis that night != day
 t.test(dayratio,nightratio, paired = TRUE, var.equal = TRUE)
-# No evidence to suggest they are different (p=0.12)
+# No evidence to suggest they are different (p=0.19)

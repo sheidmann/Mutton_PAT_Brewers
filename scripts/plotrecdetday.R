@@ -85,7 +85,7 @@ sumRecDetDay <- function(dataset){
       return(recDetDay)
 }
 # Create and bind all
-recDetDay_all <- lapply(mnbls, sumRecDetDay) %>%
+recDetDay_all <- lapply(mnb_ls, sumRecDetDay) %>%
    bind_rows()
 
 # Summarize and add temperature

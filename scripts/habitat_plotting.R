@@ -5,6 +5,7 @@
 # Last modified 24 Jun 2020
 
 # Summary: plots habitats of Brewers Bay for visualization of MCPs
+# NOTE: these plots are cursory, not intended for publication.
 
 # Data inputs:
 #     - shapefile of Brewers Bay habitats
@@ -14,7 +15,15 @@
 #     - visually explores Brewers Bay habitat polygons
 #         - with and without MCPs
 # Data exports:
-#     - none
+#     - plot of 95% MCPs over benthic habitat map
+
+# Load the libraries
+library(rgdal)
+library(raster)
+library(tidyverse)
+
+# Set output plot location
+sinkPath <- "outputs/"
 
 ##### Import and format the benthic data #####
 mnb_bh <- readOGR(dsn = "/Volumes/Squishy2/2016_MareNostrum_BenthicHabitat/01_GISData/BHabitat_PBRBay_STT_1-1K", 
@@ -28,9 +37,6 @@ mnb_bh@data$id <- rownames(mnb_bh@data)
 mnb_bh_pts <- fortify(mnb_bh, region = "id")
 names(mnb_bh_pts) <- c("x","y","order","hole","piece","id","group")
 mnb_bh_df <- plyr::join(mnb_bh_pts, mnb_bh@data, by = "id")
-head(mnb_bh@data)
-head(mnb_bh_pts)
-head(mnb_bh_df)
 
 # Check it
 ggplot(data = mnb_bh_df, aes(x, y, group = group)) +
@@ -80,10 +86,26 @@ names(mcp_95) <- gsub(".csv","", filenames)
 mcp_95 <- bind_rows(mcp_95)
 
 # Plot MCPs over the habitat map
+# Fix the extent
+XMin <- 289894
+XMax <- 291283
+YMin <- 2028438
+YMax <- 2029931
 ggplot(data = mnb_bh_df, aes(x, y, group = group, fill = mytype)) +
-     geom_polygon()+
-     scale_fill_manual("Habitat",values=c("Land"="black","Seagrass"="green",
-                                          "CoralReef"="coral","Other"="yellow",
-                                          "Artificial"="blue","Pavement"="orange"))+
-     geom_polygon(data=mcp_95, aes(x=x,y=y,group=transmitter, fill=NA),color="black")+
-     coord_equal()
+        # Draw the habitat polygons
+        geom_polygon()+
+        # Set the colors
+        scale_fill_manual("Habitat",values=c("Land"="black","Seagrass"="green",
+                                             "CoralReef"="coral","Other"="yellow",
+                                             "Artificial"="blue","Pavement"="orange"))+
+        # Draw the MCPs
+        geom_polygon(data=mcp_95, aes(x=x,y=y,group=transmitter, fill=NA),color="black")+
+        # Set the extent
+        coord_equal(xlim = c(XMin,XMax),
+                    ylim = c(YMin,YMax)) +
+        # Other formatting
+        xlab("")+ ylab("")+
+        theme(panel.background=element_blank(),
+              axis.text = element_blank(), axis.ticks = element_blank())
+# Save it for future reference
+ggsave(paste0(sinkPath,"benthichab_MCPs.jpeg"),width = 6, height = 5, units = "in")

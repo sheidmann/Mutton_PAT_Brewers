@@ -2,13 +2,13 @@
 
 # Sarah Heidmann
 # Created 8 Oct 2018
-# Last modified 3 Jun 2020
+# Last modified 26 Jun 2020
 
 # Summary:
 # Data inputs:
 #     - mutton snapper acoustic data: 1_processed_JKM (raw data)
 # Actions:
-#     - removes detections at other arrays
+#     - removes detections at other arrays (exports spawning detections)
 #     - splits the date into multiple columns
 #     - classifies detections as day, night, or crepuscular
 #     - projects positions from lat/long to UTM_20N 
@@ -61,7 +61,18 @@ mnb_ls <- lapply(mnb_ls, negLong)
 # Load list of active Brewers receivers
 statmaster <- read_csv("data/otherdata/mnb_station_master_2017.csv")
 
-# Keep only detections on that list
+# Export spawning detections for later use
+exportSpawning <- function(dataset, export = "FALSE"){
+   trans <- dataset$transmitter[1]
+   dat <- filter(dataset, !(station %in% statmaster$station))
+   if(nrow(dat)>0 && export == "TRUE"){
+      write_excel_csv(dat,paste0("data/spawning/",trans,".csv"))
+   }
+   return(dat)
+}
+spawn_ls <- lapply(mnb_ls, exportSpawning, export = "TRUE")
+
+# Keep only detections on Brewers list
 delStat <- function(dataset){
       dat <- filter(dataset, station %in% statmaster$station)
       return(dat)

@@ -1,8 +1,8 @@
 # plotrecdetday.R
 
 # Sarah Heidmann
-# Created 27 June 2017
-# Modified 19 May 2020
+# Created 27 Jun 2017
+# Modified 26 Jun 2020
 
 # Summary:
 # Data inputs:
@@ -22,7 +22,8 @@ library(lubridate)
 ##### Import the data #####
 # Read the files
 sourcePath <- "data/3_cut/" # source is modifiable
-filenames <- list.files(sourcePath) # extract the filenames
+filenames <- list.files(sourcePath) %>% # extract the filenames
+   subset(!(substr(.,10,14) %in% c("36029","45336"))) # remove unused fish
 importMNB <- function(filename){
       # Read the file
       dat <- read_csv(paste0(sourcePath, filename),
@@ -53,9 +54,13 @@ hobo
 sinkPath <- "outputs/"
 
 # Create a color list for plotting (colorblind friendly)
-# dark blue, pink, orange, grey, yellow, green, light blue, red
-mnbColors <- c("#0072B2", "#CC79A7", "#E69F00", "#999999",
-               "#F0E442", "#009E73", "#56B4E9", "#D55E00")
+# For all 8 fish
+# # dark blue, pink, orange, grey, yellow, green, light blue, red
+# mnbColors <- c("#0072B2", "#CC79A7", "#E69F00", "#999999",
+#                "#F0E442", "#009E73", "#56B4E9", "#D55E00")
+# For 6 used fish
+# dark blue, orange, yellow, green, light blue, red
+mnbColors <- c("#0072B2", "#E69F00", "#F0E442", "#009E73", "#56B4E9", "#D55E00")
 mnbColors <- setNames(mnbColors, substr(names(mnb_ls),10,14)) # link to transmitters
 
 ##### Summarize data by date #####
@@ -65,7 +70,7 @@ sumRecDetDay <- function(dataset){
       recDetDay <- dataset %>% 
          group_by(date) %>%
          summarize(No.stations = length(unique(station)),
-                   No.detections = length(station))
+                   No.detections = length(station), .groups="drop")
       # Add zeroes for missing days within the range of the dataset
       for(idate in range(dataset$date)[1]:range(dataset$date)[2]){
          idate <- as.Date(idate, origin = "1970-01-01") # make it usable
@@ -92,8 +97,7 @@ recDetDay_all <- lapply(mnb_ls, sumRecDetDay) %>%
 recDetDay_all <- hobo %>% # start with raw
    add_column(type="Temperature (°C)") %>% # set type
    group_by(date, type) %>% 
-   summarize(value = mean(temp_c)) %>% # mean temp per day
-   ungroup() %>%
+   summarize(value = mean(temp_c), .groups="drop") %>% # mean temp per day
    filter(date >= range(recDetDay_all$date)[1] & 
              date <= range(recDetDay_all$date)[2]) %>% # use only desired period
    add_column(transmitter = as.character(NA)) %>% # add column for binding
@@ -109,14 +113,14 @@ recDetDay_all %>%
 recDetDay_all %>%
    filter(type == "Stations per day") %>%
    group_by(transmitter) %>%
-   summarise(meanstats=mean(value, na.rm=TRUE))
+   summarise(meanstats=mean(value, na.rm=TRUE), .groups="drop")
 
 # What was the residency index?
 recDetDay_all %>%
    filter(type == "Detections per day") %>%
    group_by(transmitter) %>%
    # number of days with detections / number of days
-   summarise(RI = sum(value!=0) / length(value))
+   summarise(RI = sum(value!=0) / length(value), .groups="drop")
 
 
 ##### Plot #####
@@ -151,5 +155,5 @@ ggplot(data = recDetDay_all) +
          strip.background = element_blank(),
          strip.placement = "outside")
 # Save the plot
-ggsave(filename = paste0(sinkPath, "tempRecDetDay_all.jpeg"), 
+ggsave(filename = paste0(sinkPath, "tempRecDetDay_cut.jpeg"), 
        width = 10, height = 7)

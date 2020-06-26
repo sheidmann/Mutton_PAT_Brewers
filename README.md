@@ -24,7 +24,7 @@ Note: these scripts rely heavily on the tidyverse.
 - *bbmm_creation.R* - creates Brownian bridge movement models for each fish
 - *bbmm_plotting.R* - plots Brownian bridge movement model rasters for all fish
 - *mcp_metrics.R* - calculates sizes and separation of minimum convex polygons for each fish
-- *mcp_spawning.R* - calculates sizes of minimum convex polygons including spawning site detections
+- *mcp_spawning.R* - calculates sizes of minimum convex polygons including spawning sites
 - *mcp_habitats.R* - calculates habitat composition of minimum convex polygons for each fish
 - *habitat_plotting.R* - visually explores Brewers Bay habitats with and without MCPs
 - *permanova.R* - performs a repeated measures PERMANOVA on space use composition

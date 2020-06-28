@@ -91,9 +91,11 @@ FullTable <- tibble::tibble(Transmitter = character(),
                             Level = character(),
                             Size.m2 = double())
 FullTable <- lapply(mcp_95 ,calcMCPsize, level="95", export="table") %>% 
-     bind_rows(FullTable)
+        unname() %>%
+        bind_rows(FullTable)
 FullTable <- lapply(mcp_50, calcMCPsize, level="50", export="table") %>% 
-     bind_rows(FullTable)
+        unname() %>%
+        bind_rows(FullTable)
 FullTable <- FullTable %>% 
      arrange(Transmitter, desc(Level))  %>% # Sort the output
         mutate(Size.km2 = Size.m2 / 1000000) # Convert to km2
@@ -104,9 +106,11 @@ FullTable <- FullTable %>%
 # Create the day/night activity space table
 DayNightTable <- FullTable[0,1:3]
 DayNightTable <- lapply(mcp_day, calcMCPsize, level="day", export="table") %>% 
-     bind_rows(DayNightTable)
+        unname() %>%
+        bind_rows(DayNightTable)
 DayNightTable <- lapply(mcp_night, calcMCPsize, level="night", export="table") %>% 
-     bind_rows(DayNightTable)
+        unname() %>%
+        bind_rows(DayNightTable)
 DayNightTable <- DayNightTable %>%
      arrange(Transmitter, Level) %>% # Sort the output
         mutate(Size.km2 = Size.m2 / 1000000) # convert to km2
@@ -264,17 +268,24 @@ DayNightSep <- function(trans){
      diffx <- as.data.frame(gCentroid(sp_day))$x-as.data.frame(gCentroid(sp_night))$x
      diffy <- as.data.frame(gCentroid(sp_day))$y-as.data.frame(gCentroid(sp_night))$y
      sep <- sqrt(diffx^2+diffy^2) %>% round()
+     # Find the proportion of nighttime space overlapping
+     pNight <- raster::intersect(sp_day,sp_night) %>% # take the intersection
+             raster::area() %>% tibble(OverlapArea=.) %>% # find the overlap area
+             mutate(pNight=round(OverlapArea/raster::area(sp_night),
+                                 2)) %>% # calculate the proportion
+             dplyr::select(pNight) %>% unlist() # extract the proportion
      # Create the table
      table <- tibble::tibble(Transmitter = trans,
                              OverlapI = OI,
-                             CentroidSep = sep)
+                             CentroidSep = sep,
+                             PropNightInDay = pNight)
      return(table)
 }
 # Apply the function
 DayNightSepTable <- lapply(names(mcp_day), DayNightSep) %>% bind_rows()
 
 # Export day/night activity space table
-#write_excel_csv(DayNightSepTable, paste0(sinkPath, "MCP_DayNight_separation.csv"))
+# write_excel_csv(DayNightSepTable, paste0(sinkPath, "MCP_DayNight_separation.csv"))
 
 # Day/night separation summary statistics
 # Overlap Index summary

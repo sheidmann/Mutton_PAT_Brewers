@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 27 Jan 2018
-# Last modified 24 Jun 2020
+# Last modified 1 Jul 2020
 
 # Summary: plots habitats of Brewers Bay for visualization of MCPs
 # NOTE: these plots are cursory, not intended for publication.
@@ -68,8 +68,10 @@ ggplot(data = mnb_bh_df, aes(x, y,
                              #fill=M_COVER,
                              #fill = P_COVER, 
                              group = group)) +
-     geom_polygon()+
-     coord_equal()
+        geom_polygon()+
+        # Patch reefs get overplotted, so repeat them
+        geom_polygon(data=mnb_bh_df[mnb_bh_df$mytype=="CoralReef",]) +
+        coord_equal()
 
 
 ##### Add the MCPs #####
@@ -94,6 +96,8 @@ YMax <- 2029931
 ggplot(data = mnb_bh_df, aes(x, y, group = group, fill = mytype)) +
         # Draw the habitat polygons
         geom_polygon()+
+        # Patch reefs get overplotted, so repeat them
+        geom_polygon(data=mnb_bh_df[mnb_bh_df$mytype=="CoralReef",]) +
         # Set the colors
         scale_fill_manual("Habitat",values=c("Land"="black","Seagrass"="green",
                                              "CoralReef"="coral","Other"="yellow",

@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 26 Jun 2020
-# Last modified 26 Jun 2020
+# Last modified 10 Aug 2020
 
 # Summary: calculates size of MCP that includes spawning detections
 
@@ -17,6 +17,7 @@
 
 # Load the libraries
 library(tidyverse)
+library(lubridate)
 library(adehabitatHR)
 
 ##### Import the data #####
@@ -34,16 +35,28 @@ importMNB_sub <- function(filename, filepath){
      # Return the dataset
      return(dat)
 }
-mnb_sub <- lapply(filenames, importMNB_sub, sourcePath_sub) # read the files into a list
-names(mnb_sub) <- gsub(".csv", "", filenames) # take .csv out of the name
+mnb_sub <- lapply(filenames_sub, importMNB_sub, sourcePath_sub) # read the files into a list
+names(mnb_sub) <- gsub(".csv", "", filenames_sub) # take .csv out of the name
 mnb_sub
 
 # Import spawning detections
 # The function above will still work, use same procedure
 sourcePath_spawn <- "data/spawning/"
 filenames_spawn <- list.files(path = sourcePath_spawn)
-mnb_spawn <- lapply(filenames_spawn, importMNB_sub, sourcePath_spawn)
-names(mnb_spawn) <- gsub(".csv","",filenames)
+importMNB_spawn <- function(filename, filepath){
+     dat <- read_csv(paste0(filepath, filename),
+                     col_types = cols(detection_time_ast = col_datetime(format="%Y/%m/%d %H:%M:%S"))) %>%
+          # Change time zone
+          mutate(detection_time_ast = force_tz(detection_time_ast, 
+                                               "America/Virgin")) %>%
+          # Sort by time
+          arrange(detection_time_ast) %>%
+          # Add date and hour columns
+          mutate(date=as.Date(detection_time_ast), hour=hour(detection_time_ast))
+     return(dat)
+}
+mnb_spawn <- lapply(filenames_spawn, importMNB_spawn, sourcePath_spawn)
+names(mnb_spawn) <- gsub(".csv","",filenames_spawn)
 mnb_spawn
 # Project spawning detections
 projUTM20 <- function(dataset){
@@ -65,6 +78,14 @@ m45334 <- mnb_sub[[1]] %>%
 m45338 <- mnb_sub[[2]] %>% 
      rename(x_UTM20N=avg_x,y_UTM20N=avg_y) %>%
      bind_rows(mnb_spawn[[2]])
+
+
+##### Summarize spawning detections #####
+# How long were they detected at spawning sites?
+for(fish in mnb_spawn){
+     print(fish$transmitter[1])
+     print(range(fish$detection_time_ast))
+}
 
 ##### Create the MCPs #####
 makeMCP_spawn <- function(dataset, mcpPercent){

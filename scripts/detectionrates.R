@@ -2,7 +2,7 @@
 
 # Sarah Heidmann
 # Created 3 Jun 2020
-# Modified 4 Jun 2020
+# Modified 14 Aug 2020
 
 # Summary:
 # Data inputs:
@@ -12,11 +12,14 @@
 #     - compares station visitation rates between day and night with a t-test
 #     - compares detection rates between day and night with a t-test
 #     - tests correlation between station visitation rates and detection rates
+#     - compares station visitation rates between spawning and pre-spawning with a t-test
+#     - compares detection rates between spawning and pre-spawning with a t-test
 # Data exports:
 #     - none (console output)
 
 # Load libraries
 library(tidyverse)
+library(lubridate)
 
 ##### Import the data #####
 sourcePath <- "data/4_binned_1hr/" # source is modifiable
@@ -31,7 +34,7 @@ mnb <- lapply(filenames, importMNB) %>% # read all the files into a list
      bind_rows() # combine them into one dataset for testing
 mnb # check it
 
-##### Summarize detection rates across periods #####
+##### Summarize detection rates for day and night #####
 # Summary stats for each period
 mnb %>%
      group_by(daynight) %>%
@@ -134,3 +137,95 @@ cor.test(cor_det_stat$meandetperhour, cor_det_stat$meanstatperhour,
 cor.test(jitter(cor_det_stat$meandetperhour), jitter(cor_det_stat$meanstatperhour), 
          method = "spearman")
 # Stations and detections are correlated (Spearman's rank, rho=0.93, p<0.0001).
+
+
+##### Summarize detection rates across spawning periods #####
+# Set spawning month categories
+spawn_cats <- tibble(month=seq(1,12,1),
+                     spawn_cat=c(rep("prespawn",3), # Jan-Mar are prespawn
+                                 rep("spawn",5), # Apr-Aug are spawning
+                                 rep(NA,3), #Sept-Nov are NA
+                                 "prespawn")) # Dec is pre-spawn
+# Categorize bins into spawning categories by month
+mnb <- mnb %>% 
+        mutate(month = month(date)) %>%
+        left_join(spawn_cats)
+# Summary stats for each period
+mnb %>%
+        group_by(spawn_cat) %>%
+        summarise(periods = length(No.detections),
+                  meanstats = mean(No.stations),
+                  sestats = sd(No.stations)/sqrt(length(No.detections)),
+                  meandets = mean(No.detections),
+                  sedets = sd(No.detections)/sqrt(length(No.detections)))
+# Fewer pre-spawn periods and similar variation
+# Higher station and detection rates in pre-spawn period
+
+# Plot detections by month
+mnb %>%
+        group_by(month, spawn_cat) %>%
+        summarise(meanstats = mean(No.stations),
+                  sestats = sd(No.stations)/sqrt(length(No.stations)),
+                  meandets = mean(No.detections),
+                  sedets = sd(No.detections)/sqrt(length(No.detections))) %>%
+        ggplot(data=.) +
+        geom_point(aes(x=month,y=meandets, color=spawn_cat)) +
+        geom_errorbar(aes(x=month,ymin=meandets-sedets,ymax=meandets+sedets,
+                          color=spawn_cat))
+# Plot stations by month
+mnb %>%
+        group_by(month, spawn_cat) %>%
+        summarise(meanstats = mean(No.stations),
+                  sestats = sd(No.stations)/sqrt(length(No.stations)),
+                  meandets = mean(No.detections),
+                  sedets = sd(No.detections)/sqrt(length(No.detections))) %>%
+        ggplot(data=.) +
+        geom_point(aes(x=month,y=meanstats,color=spawn_cat)) +
+        geom_errorbar(aes(x=month,ymin=meanstats-sestats,ymax=meanstats+sestats,
+                          color=spawn_cat))
+
+
+##### Test between spawn and pre-spawn #####
+
+# Did they visit  stations at different rates during pre-spawning and spawning?
+
+# Make the dataset
+spawn_stat <- mnb %>% 
+        pivot_wider(id_cols=c(transmitter,date), names_from = spawn_cat,
+                    values_from = No.stations, 
+                    values_fn = list(No.stations = mean)) # calc stations/hour
+# Check for normality
+shapiro.test(spawn_stat$spawn) # not normal (p<0.001)
+shapiro.test(spawn_stat$prespawn) # not normal (p<0.001)
+# A t-test is robust to lack of normality with a large enough sample size.
+# Because my sample unit is day, sample size is pretty large (n=1898)
+# Test for equal variance
+var.test(spawn_stat$spawn, spawn_stat$prespawn)
+# Variances are not equal p<0.001
+
+# Test hypothesis that spawn stations != prespawn stations
+t.test(spawn_stat$spawn, spawn_stat$prespawn, 
+       paired = FALSE, var.equal = FALSE)
+# Significant at p<0.001
+
+
+# Did they have different numbers of detections during spawn and pre-spawn?
+
+# Make the dataset
+spawn_det <- mnb %>% 
+        pivot_wider(id_cols=c(transmitter,date), names_from = spawn_cat,
+                    values_from = No.detections, 
+                    values_fn = list(No.detections = mean)) # calc detections/hour
+# Check for normality
+shapiro.test(spawn_det$spawn) # not normal (p<0.001)
+shapiro.test(spawn_det$prespawn) # not normal (p<0.001)
+# A t-test is robust to lack of normality with a large enough sample size.
+# Because my sample unit is day, sample size is pretty large (n=1898)
+# Test for equal variance
+var.test(spawn_det$spawn, spawn_det$prespawn)
+# Variances are not equal p<0.001
+
+# Test hypothesis that spawn detections != prespawn detections
+t.test(spawn_det$spawn, spawn_det$prespawn, 
+       paired = FALSE, var.equal = FALSE)
+# Significant at p<0.001

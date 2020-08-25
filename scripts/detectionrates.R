@@ -187,7 +187,7 @@ mnb %>%
 
 ##### Test between spawn and pre-spawn #####
 
-# Did they visit  stations at different rates during pre-spawning and spawning?
+# Did they visit stations at different rates during pre-spawning and spawning?
 
 # Make the dataset
 spawn_stat <- mnb %>% 
@@ -229,3 +229,27 @@ var.test(spawn_det$spawn, spawn_det$prespawn)
 t.test(spawn_det$spawn, spawn_det$prespawn, 
        paired = FALSE, var.equal = FALSE)
 # Significant at p<0.001
+
+
+# Did they have different hourly residency indices during spawn and pre-spawn?
+
+# Make the dataset
+spawn_res <- mnb %>%
+     mutate(PA=ifelse(No.detections>0,1,0)) %>%
+     pivot_wider(id_cols=c(transmitter,date, hour), names_from = spawn_cat,
+                 values_from = PA) # calc detections/hour
+# A t-test is robust to lack of normality with a large enough sample size.
+# Because my sample unit is hour, sample size is HUGE
+# Test for equal variance
+var.test(spawn_res$spawn, spawn_res$prespawn)
+# Variances are not equal p<0.001
+
+# Test hypothesis that spawn detections != prespawn detections
+t.test(spawn_res$spawn, spawn_res$prespawn, 
+       paired = FALSE, var.equal = FALSE)
+# Significant at p<0.001
+# Does this hold when removing the fish that was detected elsewhere?
+spawn_res_sub <- spawn_res %>%
+     filter(transmitter != "A69-1601-45338")
+t.test(spawn_res_sub$spawn, spawn_res_sub$prespawn, paired=FALSE, var.equal=FALSE)
+# Yes, significant at p<0.001

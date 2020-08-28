@@ -250,6 +250,34 @@ t.test(spawn_res$spawn, spawn_res$prespawn,
 # Significant at p<0.001
 # Does this hold when removing the fish that was detected elsewhere?
 spawn_res_sub <- spawn_res %>%
-     filter(transmitter != "A69-1601-45338")
+     filter(transmitter != "A69-1601-45338") %>%
+        filter(transmitter != "A69-1601-45334")
 t.test(spawn_res_sub$spawn, spawn_res_sub$prespawn, paired=FALSE, var.equal=FALSE)
 # Yes, significant at p<0.001
+
+# Look at residence index by month
+mnb %>%
+        mutate(PA=ifelse(No.detections>0,1,0)) %>%
+        group_by(month, spawn_cat) %>%
+        summarize(RI=mean(PA),
+                  n=length(na.omit(PA))) %>%
+        ggplot(data=.) +
+        geom_point(aes(x=month,y=RI)) +
+        ylab("Mean Hourly Residence Index (RI)")+
+        scale_x_continuous(name="Month",breaks = c(1:12), labels = c(1:12)) +
+        theme(panel.background = element_blank(),
+              axis.line=element_line())
+# There is a dip during spawning months but could that be due to less data?
+# Look at hours present vs absent by month
+mnb %>%
+        mutate(PA=ifelse(No.detections>0,1,0)) %>%
+        group_by(month, spawn_cat, PA) %>%
+        mutate(PA=as.factor(PA)) %>%
+        summarize(n=length(hour)) %>%
+        ggplot(data=.) +
+        geom_point(aes(x=month,y=n,color=PA)) +
+        ylab("Number of hours present/absent")+
+        scale_x_continuous(name="Month",breaks = c(1:12), labels = c(1:12)) +
+        scale_color_discrete(name="",breaks=c(0,1),labels=c("absent","present")) +
+        theme(panel.background = element_blank(),
+              axis.line=element_line())

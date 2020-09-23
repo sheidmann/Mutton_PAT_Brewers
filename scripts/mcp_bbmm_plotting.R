@@ -153,3 +153,10 @@ ggplot(data=mnb_bbmm) +
            text = element_text(family = "Times New Roman", size = 20))
 # Save the plot
 ggsave(paste0(sinkPath,"MCP_BBMM_allfacet.tiff"), width = 5.5, height = 9, units = "in")
+
+# PDF for publication
+library(extrafont)
+ggsave(filename = paste0(sinkPath, "Figure 3.pdf"), dpi=300, 
+       width = 5.5, height = 6.5)
+embed_fonts(paste0(sinkPath, "Figure 3.pdf"), 
+            outfile=paste0(sinkPath, "Figure 3 embed.pdf"))

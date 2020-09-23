@@ -155,5 +155,12 @@ ggplot(data = recDetDay_all) +
          strip.background = element_blank(),
          strip.placement = "outside")
 # Save the plot
-ggsave(filename = paste0(sinkPath, "tempRecDetDay_cut.jpeg"), 
+# ggsave(filename = paste0(sinkPath, "tempRecDetDay_cut.jpeg"), 
+#        width = 10, height = 7)
+
+# PDF for publication
+library(extrafont)
+ggsave(filename = paste0(sinkPath, "Figure 2.pdf"), dpi=300, 
        width = 10, height = 7)
+embed_fonts(paste0(sinkPath, "Figure 2.pdf"), 
+            outfile=paste0(sinkPath, "Figure 2 embed.pdf"))

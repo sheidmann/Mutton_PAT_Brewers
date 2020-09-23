@@ -185,3 +185,10 @@ ggplot() +
               axis.text = element_blank(), axis.ticks = element_blank())
 # Save the plot
 ggsave(paste0(sinkPath,"MCP_daynight_bw_allfacet.tiff"), width = 5.5, height = 9, units = "in")
+
+# PDF for publication
+library(extrafont)
+ggsave(filename = paste0(sinkPath, "Figure 4.pdf"), dpi=300, 
+       width = 5.5, height = 9)
+embed_fonts(paste0(sinkPath, "Figure 4.pdf"), 
+            outfile=paste0(sinkPath, "Figure 4 embed.pdf"))

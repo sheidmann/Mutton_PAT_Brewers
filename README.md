@@ -2,7 +2,7 @@ This study is not yet published.
 
 **Study:** Home range characteristics and diel patterns in space use of mutton snapper, *Lutjanus analis*, in St. Thomas, US Virgin Islands
 
-**Authors:** Sarah L. Heidmann, Jonathan Jossart, Richard S. Nemeth\
+**Authors:** Sarah L. Heidmann, Jonathan Jossart, Melissa Kimble, Richard S. Nemeth\
 Corresponding author: SL Heidmann, sarah.heidmann\@uvi.edu
 
 **Abstract**\
@@ -30,4 +30,4 @@ Note: these scripts rely heavily on the tidyverse.
 - *habitat_plotting.R* - visually explores Brewers Bay habitats with and without MCPs
 - *permanova.R* - performs a repeated measures PERMANOVA on space use composition
 - *temperature_analysis.R* - a frequency analysis of temperature associations
-
+- *HR_asymptote.R* - plots home range estimates throughout the tracking period to see whether they reach an asymptote

@@ -31,3 +31,4 @@ Note: these scripts rely heavily on the tidyverse.
 - *permanova.R* - performs a repeated measures PERMANOVA on space use composition
 - *temperature_analysis.R* - a frequency analysis of temperature associations
 - *HR_asymptote.R* - plots home range estimates throughout the tracking period to see whether they reach an asymptote
+- *length_regressions.R* - performs linear regressions testing whether fish length affects home range characteristics

@@ -130,6 +130,7 @@ FullTable %>%
 
 # 95% full BBMMs
 bbmm %>%
+        filter(Level==95) %>%
         summarize(minsize = min(BBMM_Size.km2),
                   maxsize = max(BBMM_Size.km2),
                   meansize = mean(BBMM_Size.km2),
@@ -162,12 +163,13 @@ DayNightTable %>%
                   meanper = mean(nightpercentofday))
 
 ##### Size comparison tests #####
-# Are MCPs and BBMMs different sizes?
+# Are 95% MCPs and BBMMs different sizes?
 testMCP_BBMM <- FullTable %>%
         filter(Level==95) %>% # Take out the 50% MCPs
         rename(MCP_Size.m2 = Size.m2, # Change shared names
                MCP_Size.km2 = Size.km2) %>% 
-        left_join(bbmm, by="Transmitter") # Join to BBMM size table
+        left_join(filter(bbmm, Level==95), 
+                  by="Transmitter") # Join to BBMM size table
 # Since small sample size, need to check for normality with Shapiro-Wilks
 # null: data is normal; alternative: data not normal
 shapiro.test(testMCP_BBMM$MCP_Size.m2) # p = 0.64 (normal)
@@ -179,6 +181,25 @@ var.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2)
 t.test(testMCP_BBMM$MCP_Size.m2, testMCP_BBMM$BBMM_Size.m2, 
        paired = TRUE, var.equal = TRUE)
 # Significant at p=0.02
+
+# Are 50% MCPs and BBMMs different sizes?
+testMCP_BBMM50 <- FullTable %>%
+        filter(Level==50) %>% # Take out the 95% MCPs
+        rename(MCP_Size.m2 = Size.m2, # Change shared names
+               MCP_Size.km2 = Size.km2) %>% 
+        left_join(filter(bbmm, Level==50),
+                  by="Transmitter") # Join to BBMM size table
+# Since small sample size, need to check for normality with Shapiro-Wilks
+# null: data is normal; alternative: data not normal
+shapiro.test(testMCP_BBMM50$MCP_Size.m2) # p = 0.078(normalish)
+shapiro.test(testMCP_BBMM50$BBMM_Size.m2) # p = 0.069 (normalish)
+# Test for equal variance
+var.test(testMCP_BBMM50$MCP_Size.m2, testMCP_BBMM50$BBMM_Size.m2)
+# No evidence that variances are not equal (p=0.1)
+# Test hypothesis that MCP != BBMM
+t.test(testMCP_BBMM50$MCP_Size.m2, testMCP_BBMM50$BBMM_Size.m2, 
+       paired = TRUE, var.equal = TRUE)
+# Not significant at p=0.78
 
 # Are day and night spaces different sizes?
 # paired t-test: two-tailed

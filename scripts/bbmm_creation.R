@@ -78,7 +78,7 @@ head(mnb_lt[[2]][[1]]) # 45334
 # If sig1=0, decrease sig2 until sig1 is nonzero
 
 # Write the function to make the BBMM
-makeBBMM <- function(dat_lt, sig2_est, sig1_est,
+makeBBMM <- function(dat_lt, level = 95, sig2_est, sig1_est,
                      dfPath="", rasterPath=""){
         # Create it based on estimated parameters
         bbmm <- kernelbb(dat_lt, sig1 = sig1_est, sig2 = sig2_est, grid = 50)
@@ -90,8 +90,6 @@ makeBBMM <- function(dat_lt, sig2_est, sig1_est,
         # Make the size table
         # Extract the transmitter
         trans <- attr(dat_lt[[1]],"id")
-        # Set the level of interest
-        level = 95
         # Calculate the area
         area <- adehabitatHR::kernel.area(bbmm, percent = level, unout = "m2")
         # Create the table
@@ -125,7 +123,7 @@ makeBBMM <- function(dat_lt, sig2_est, sig1_est,
 
 # Create the full home range table
 FullTable <- tibble::tibble(Transmitter = character(),
-                            Level = character(),
+                            Level = double(),
                             Size.m2 = double())
 
 # 24797
@@ -136,8 +134,13 @@ sd(mnb_lt[["A69-1601-24797"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-24797"]], sig2 = 72, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.05
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-24797"]], sig2_est = 72, sig1_est = 0.05,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-24797"]], 
+                      level = 95,
+                      sig2_est = 72, sig1_est = 0.05,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-24797"]], 
+                      level = 50, sig2_est = 72, sig1_est = 0.05) %>%
         bind_rows(FullTable)
 
 # 45334
@@ -148,8 +151,12 @@ sd(mnb_lt[["A69-1601-45334"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-45334"]], sig2 = 62, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.12
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-45334"]], sig2_est = 62, sig1_est = 0.12,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45334"]], level = 95,
+                      sig2_est = 62, sig1_est = 0.12,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45334"]], level = 50,
+                      sig2_est = 62, sig1_est = 0.12) %>%
         bind_rows(FullTable)
 
 # 45337
@@ -160,8 +167,12 @@ sd(mnb_lt[["A69-1601-45337"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-45337"]], sig2 = 78, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.12
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-45337"]], sig2_est = 78, sig1_est = 0.12,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45337"]], level = 95,
+                      sig2_est = 78, sig1_est = 0.12,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45337"]], level = 50,
+                      sig2_est = 78, sig1_est = 0.12) %>%
         bind_rows(FullTable)
 
 # 45338
@@ -172,8 +183,12 @@ sd(mnb_lt[["A69-1601-45338"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-45338"]], sig2 = 52, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.11
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-45338"]], sig2_est = 52, sig1_est = 0.11,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45338"]], level = 95,
+                      sig2_est = 52, sig1_est = 0.11,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45338"]], level = 50,
+                      sig2_est = 52, sig1_est = 0.11) %>%
         bind_rows(FullTable)
 
 # 45339
@@ -184,8 +199,12 @@ sd(mnb_lt[["A69-1601-45339"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-45339"]], sig2 = 43, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.34
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-45339"]], sig2_est = 43, sig1_est = 0.34,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45339"]], level = 95,
+                      sig2_est = 43, sig1_est = 0.34,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-45339"]], level = 50,
+                      sig2_est = 43, sig1_est = 0.34) %>%
         bind_rows(FullTable)
 
 # 59271
@@ -196,8 +215,12 @@ sd(mnb_lt[["A69-1601-59271"]][[1]]$dist, na.rm = TRUE)
 liker(mnb_lt[["A69-1601-59271"]], sig2 = 55, rangesig1 = c(0, 1))[[1]]$sig1
 # sig1= 0.74
 # Do the BBMM
-FullTable <- makeBBMM(mnb_lt[["A69-1601-59271"]], sig2_est = 55, sig1_est = 0.74,
+FullTable <- makeBBMM(mnb_lt[["A69-1601-59271"]], level = 95,
+                      sig2_est = 55, sig1_est = 0.74,
                       dfPath = "outputs/bbmm_df/") %>%
+        bind_rows(FullTable)
+FullTable <- makeBBMM(mnb_lt[["A69-1601-59271"]], level = 50,
+                      sig2_est = 55, sig1_est = 0.74) %>%
         bind_rows(FullTable)
 
 # Format the BBMM home range table

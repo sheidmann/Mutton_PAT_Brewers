@@ -128,9 +128,9 @@ FullTable %>%
                   nsize = length(Size.km2)) %>%
         mutate(semsize = sdsize / sqrt(nsize))
 
-# 95% full BBMMs
+# 95% and 50% full BBMMs
 bbmm %>%
-        filter(Level==95) %>%
+        group_by(Level) %>%
         summarize(minsize = min(BBMM_Size.km2),
                   maxsize = max(BBMM_Size.km2),
                   meansize = mean(BBMM_Size.km2),

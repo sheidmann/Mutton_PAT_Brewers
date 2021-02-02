@@ -22,6 +22,7 @@ library(tidyverse)
 library(adehabitatLT)
 library(sp)
 library(adehabitatHR)
+library(lubridate)
 
 ##### Import the data #####
 sourcePath <- "data/4_binned_1hr/" # source is modifiable
@@ -123,18 +124,20 @@ HRsize <- function(dataset, HRpercent=95,
      # Make the BBMM
      dat_lt <- makeltraj(dataset)
      params <- filter(paramTab, ID==trans)
-     bbmm <- kernelbb(dat_lt, 
-                      sig1 = params$sig1_est, 
-                      sig2 = params$sig2_est, 
+     bbmm <- kernelbb(dat_lt,
+                      sig1 = params$sig1_est,
+                      sig2 = params$sig2_est,
                       grid = 50)
-     bbmmArea <- as.integer(adehabitatHR::kernel.area(bbmm, 
-                                           percent = HRpercent, 
+     bbmmArea <- as.integer(adehabitatHR::kernel.area(bbmm,
+                                           percent = HRpercent,
                                            unout = "m2"))
+     #bbmmArea <- NA # Have this here for faster MCP plotting
      # Make tibble row
      tabrow <- tibble::tibble(ID = trans,
-                             timedays = length(unique(dataset$date)),
-                             MCPsizem2 = mcpArea,
-                             BBMMsizem2 = bbmmArea)
+                              truedate = as.character(tail(dataset$date,1)),
+                              timedays = length(unique(dataset$date)),
+                              MCPsizem2 = mcpArea,
+                              BBMMsizem2 = bbmmArea)
      # If table given, return the row in the table
      if(is_tibble(sinkTab)){
           fulltab <- bind_rows(sinkTab, tabrow)
@@ -145,6 +148,7 @@ HRsize <- function(dataset, HRpercent=95,
 }
 ##### Make the blank table #####
 hrtab <- tibble::tibble(ID = character(),
+                        truedate = character(),
                         timedays = integer(),
                         MCPsizem2 = double(),
                         BBMMsizem2 = double())
@@ -173,12 +177,13 @@ hrtab
 ##### Plot #####
 # Melt for plotting
 hrtab_melt <- hrtab %>%
-     dplyr::select(ID, timedays, MCPsizekm2, BBMMsizekm2) %>%
+     dplyr::select(ID, truedate, timedays, MCPsizekm2, BBMMsizekm2) %>%
      pivot_longer(cols = c(ends_with("km2")),
                   names_to = "Type",
                   values_to = "sizekm2") %>%
      mutate(Type = gsub("sizekm2","",Type)) %>%
-     mutate(group = paste(ID, Type))
+     mutate(group = paste(ID, Type)) %>%
+        mutate(truedate = ymd(truedate))
 # Plot
 ggplot(data = hrtab_melt) +
      geom_point(aes(x=timedays,y=sizekm2, color = ID, shape=Type)) +
@@ -188,4 +193,17 @@ ggplot(data = hrtab_melt) +
      theme(panel.background = element_blank(),
            axis.line = element_line())
 # ggsave(filename = paste0(sinkPath, "AsymptoticHomeRange_100.jpeg"),
+#        width = 10, height = 7)
+
+# Plot true dates to look at spawning
+ggplot(data = filter(hrtab_melt,Type=="MCP")) +
+        geom_point(aes(x=truedate,y=sizekm2, color = ID)) +
+        geom_line(aes(x=truedate,y=sizekm2, color = ID)) +
+        xlab("Date") +
+        ylab("Home range size (km2)") +
+        scale_x_date(date_breaks = "1 month") +
+        theme(panel.background = element_blank(),
+              axis.line = element_line(), 
+              axis.text.x = element_text(angle = -90))
+# ggsave(filename = paste0(sinkPath, "AsymptoticHomeRange_MCP100_date.jpeg"),
 #        width = 10, height = 7)

@@ -155,6 +155,7 @@ for(dataset in mnb_ls){
      maxdays <- length(unique(dataset$date))
      for(numdays in seq(10, maxdays, 10)){
           hrtab <- HRsize(cutTime(dataset, numdays = numdays),
+                          HRpercent=100,
                   paramTab = BBMMparams, sinkTab=hrtab)
      }
 }
@@ -186,5 +187,5 @@ ggplot(data = hrtab_melt) +
      ylab("Home range size (km2)") +
      theme(panel.background = element_blank(),
            axis.line = element_line())
-# ggsave(filename = paste0(sinkPath, "AsymptoticHomeRange.jpeg"),
+# ggsave(filename = paste0(sinkPath, "AsymptoticHomeRange_100.jpeg"),
 #        width = 10, height = 7)
